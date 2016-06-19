@@ -5,7 +5,7 @@ plugins {
 dependencies {
     compile group: "com.google.code.gson", name: "gson", version: "2.7"
     compile group: "com.google.guava", name: "guava", version: "19.0"
-    compile group: "org.apache.httpcomponents", name: "httpclient", version: "4.5.2"
+    compile group: "commons-io", name: "commons-io", version: "2.5"
 }
 
 jar {
