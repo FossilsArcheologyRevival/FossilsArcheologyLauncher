@@ -125,9 +125,37 @@ public class Bootstrap {
                         e.printStackTrace();
                     }
                     System.out.println("Update complete!");
+                    Bootstrap.this.launch();
                 }
             });
+        } else {
+            this.launch();
         }
+    }
+
+    public void launch() {
+        String[] arguments = {"java", "-jar", this.launcherFile.getAbsolutePath()};
+        arguments = this.concat(arguments, this.getLaunchArguments());
+        ProcessBuilder process = new ProcessBuilder(arguments);
+        process.directory(this.dataDir);
+        try {
+            process.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String[] concat(String[] a, String[] b) {
+        int aLength = a.length;
+        int bLength = b.length;
+        String[] array = new String[aLength + bLength];
+        System.arraycopy(a, 0, array, 0, aLength);
+        System.arraycopy(b, 0, array, aLength, bLength);
+        return array;
+    }
+
+    public String[] getLaunchArguments() {
+        return new String[]{};
     }
 
     public File getDataFolder() {
