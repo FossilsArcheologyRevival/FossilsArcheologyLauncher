@@ -1,0 +1,17 @@
+plugins {
+  id "com.github.johnrengelman.shadow" version "1.2.3"
+}
+
+dependencies {
+    compile group: "com.google.code.gson", name: "gson", version: "2.7"
+    compile group: "com.google.guava", name: "guava", version: "19.0"
+    compile group: "org.apache.httpcomponents", name: "httpclient", version: "4.5.2"
+}
+
+jar {
+    manifest {
+        attributes("Main-Class": "net.ilexiconn.launcher.Bootstrap")
+    }
+}
+
+build.dependsOn(shadowJar)

@@ -1,0 +1,12 @@
+subprojects {
+    apply plugin: "java"
+
+    group = "net.ilexiconn"
+    archivesBaseName = "launcher"
+    version = "0.1.0-develop"
+    sourceCompatibility = targetCompatibility = "1.6"
+
+    repositories {
+        mavenCentral()
+    }
+}

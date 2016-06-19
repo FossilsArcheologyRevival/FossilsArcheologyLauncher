@@ -1,0 +1,4 @@
+rootProject.name = "revival-launcher"
+
+include "bootstrap"
+include "launcher"

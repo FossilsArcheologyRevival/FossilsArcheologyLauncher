@@ -1,0 +1,15 @@
+plugins {
+  id "com.github.johnrengelman.shadow" version "1.2.3"
+}
+
+dependencies {
+    compile group: "com.google.code.gson", name: "gson", version: "2.7"
+}
+
+jar {
+    manifest {
+        attributes("Main-Class": "net.ilexiconn.launcher.Launcher")
+    }
+}
+
+build.dependsOn(shadowJar)
