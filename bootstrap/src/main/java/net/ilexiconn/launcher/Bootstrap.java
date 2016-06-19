@@ -35,10 +35,12 @@ public class Bootstrap {
     public String newerURL;
 
     public Progressbar progressbar;
+    public String[] args;
 
     public static void main(String[] args) {
         List<String> argumentList = Arrays.asList(args);
         Bootstrap bootstrap = new Bootstrap(argumentList.contains("--portable") || argumentList.contains("-p"));
+        bootstrap.args = args;
 
         try {
             bootstrap.start();
@@ -135,7 +137,7 @@ public class Bootstrap {
 
     public void launch() {
         String[] arguments = {"java", "-jar", this.launcherFile.getAbsolutePath()};
-        arguments = this.concat(arguments, this.getLaunchArguments());
+        arguments = this.concat(arguments, this.args);
         ProcessBuilder process = new ProcessBuilder(arguments);
         process.directory(this.dataDir);
         try {
@@ -152,10 +154,6 @@ public class Bootstrap {
         System.arraycopy(a, 0, array, 0, aLength);
         System.arraycopy(b, 0, array, aLength, bLength);
         return array;
-    }
-
-    public String[] getLaunchArguments() {
-        return new String[]{};
     }
 
     public File getDataFolder() {
