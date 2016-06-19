@@ -1,12 +1,14 @@
 package net.ilexiconn.launcher;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.io.FileUtils;
 import uk.co.rx14.jmclaunchlib.LaunchSpec;
 import uk.co.rx14.jmclaunchlib.LaunchTask;
 import uk.co.rx14.jmclaunchlib.LaunchTaskBuilder;
+import uk.co.rx14.jmclaunchlib.auth.PasswordSupplier;
 import uk.co.rx14.jmclaunchlib.util.OS;
 
 import java.io.*;
@@ -49,38 +51,60 @@ public class Launcher {
             } catch (IOException e) {
                 throw new RuntimeException("Failed to create the config file");
             }
-            try {
-                FileUtils.writeStringToFile(this.configFile, new GsonBuilder().setPrettyPrinting().create().toJson(this.config));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            this.saveConfig();
         }
     }
 
     public void writeDefaultConfig(JsonObject config) {
+        config.addProperty("username", "");
         config.addProperty("javaHome", System.getProperty("java.home"));
         config.addProperty("keepLauncherOpen", false);
-        config.addProperty("jvmArguments", "");
+        JsonArray array = new JsonArray();
+        array.add("-Xmx1G");
+        array.add("-XX:+UseConcMarkSweepGC");
+        array.add("-XX:+CMSIncrementalMode");
+        array.add("-XX:-UseAdaptiveSizePolicy");
+        array.add("-Xmn128M");
+        config.add("jvmArguments", array);
+    }
+
+    public void saveConfig() {
+        try {
+            FileUtils.writeStringToFile(this.configFile, new GsonBuilder().setPrettyPrinting().create().toJson(this.config));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void start() throws IOException {
-        LaunchTask task = new LaunchTaskBuilder()
+        final LaunchTask task = new LaunchTaskBuilder()
                 .setCachesDir(new File(this.dataDir, "cache").toPath())
                 .setForgeVersion("1.7.10", "1.7.10-10.13.4.1558-1.7.10")
                 .setInstanceDir(this.dataDir.toPath())
 
-                .setUsername("iLexiconn")
-                .setOffline()
-
-                /*.setUsername("")
+                .setUsername(this.config.get("username").getAsString())
                 .setPasswordSupplier(new PasswordSupplier() {
                     @Override
                     public String getPassword(String username, boolean retry, String failureMessage) {
                         return "";
                     }
-                })*/
+                })
 
                 .build();
+
+        new Thread() {
+            long last = System.currentTimeMillis();
+
+            @Override
+            public void run() {
+                while (task.getCompletedPercentage() < 100) {
+                    if (System.currentTimeMillis() - this.last > 1000L) {
+                        System.out.println((int) task.getCompletedPercentage() + "%");
+                        this.last = System.currentTimeMillis();
+                    }
+                }
+            }
+        }.start();
 
         LaunchSpec launchSpec = task.getSpec();
         Process process = launchSpec.run(Paths.get(this.config.get("javaHome").getAsString(), "bin", OS.getCURRENT() == OS.WINDOWS ? "java.exe" : "java"));
