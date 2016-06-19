@@ -106,8 +106,9 @@ public class Bootstrap {
         }
 
         if (this.newerVersion != null) {
-            System.out.println("Found newer version " + this.newerVersion);
+            System.out.println("Found newer version: " + this.newerVersion + " (currently " + this.currentVersion + ")");
             if (this.launcherFile.exists()) {
+                System.out.println("Removing old jar");
                 if (!this.launcherFile.delete()) {
                     throw new RuntimeException("Failed to remove old jar");
                 }
@@ -123,7 +124,7 @@ public class Bootstrap {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    System.out.println("Complete!");
+                    System.out.println("Update complete!");
                 }
             });
         }
