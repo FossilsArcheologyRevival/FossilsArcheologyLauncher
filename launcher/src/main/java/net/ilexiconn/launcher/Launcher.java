@@ -4,6 +4,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.ilexiconn.launcher.ui.LauncherFrame;
 import org.apache.commons.io.FileUtils;
 import uk.co.rx14.jmclaunchlib.LaunchSpec;
 import uk.co.rx14.jmclaunchlib.LaunchTask;
@@ -19,22 +20,30 @@ import java.util.List;
 public class Launcher {
     public File dataDir;
     public File configFile;
+    public File cacheDir;
     public JsonObject config;
+    public boolean isCached;
+
+    public LauncherFrame frame;
 
     public static void main(String[] args) {
         List<String> argumentList = Arrays.asList(args);
-        Launcher launcher = new Launcher(argumentList.contains("--portable") || argumentList.contains("-p"));
-
-        try {
-            launcher.start();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        new Launcher(argumentList.contains("--portable") || argumentList.contains("-p"));
     }
 
     public Launcher(boolean portable) {
         this.dataDir = portable ? new File(".") : this.getDataFolder();
         this.configFile = new File(this.dataDir, "launcher.json");
+        this.cacheDir = new File(this.dataDir, "cache");
+        if (!this.dataDir.exists()) {
+            if (!this.dataDir.mkdirs()) {
+                throw new RuntimeException("Failed to create data dir");
+            }
+        }
+        if (this.cacheDir.exists()) {
+            File authFile = new File(this.cacheDir, "auth.json");
+            this.isCached = authFile.exists();
+        }
         if (this.configFile.exists()) {
             try {
                 this.config = new JsonParser().parse(new FileReader(this.configFile)).getAsJsonObject();
@@ -53,6 +62,7 @@ public class Launcher {
             }
             this.saveConfig();
         }
+        this.frame = new LauncherFrame(this);
     }
 
     public void writeDefaultConfig(JsonObject config) {
@@ -76,33 +86,22 @@ public class Launcher {
         }
     }
 
-    public void start() throws IOException {
+    public void startMinecraft(PasswordSupplier passwordSupplier, final IProgressCallback progressCallback) throws IOException {
         final LaunchTask task = new LaunchTaskBuilder()
-                .setCachesDir(new File(this.dataDir, "cache").toPath())
+                .setCachesDir(this.cacheDir.toPath())
                 .setForgeVersion("1.7.10", "1.7.10-10.13.4.1558-1.7.10")
                 .setInstanceDir(this.dataDir.toPath())
-
                 .setUsername(this.config.get("username").getAsString())
-                .setPasswordSupplier(new PasswordSupplier() {
-                    @Override
-                    public String getPassword(String username, boolean retry, String failureMessage) {
-                        return "";
-                    }
-                })
-
+                .setPasswordSupplier(passwordSupplier)
                 .build();
 
         new Thread() {
-            long last = System.currentTimeMillis();
-
             @Override
             public void run() {
                 while (task.getCompletedPercentage() < 100) {
-                    if (System.currentTimeMillis() - this.last > 1000L) {
-                        System.out.println((int) task.getCompletedPercentage() + "%");
-                        this.last = System.currentTimeMillis();
-                    }
+                    progressCallback.onProgress((int) task.getCompletedPercentage());
                 }
+                progressCallback.onProgress(100);
             }
         }.start();
 
