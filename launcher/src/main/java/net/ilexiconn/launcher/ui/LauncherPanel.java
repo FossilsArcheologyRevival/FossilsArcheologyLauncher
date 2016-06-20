@@ -73,7 +73,6 @@ public class LauncherPanel extends JPanel {
         this.play.addActionListener(e -> new Thread() {
             public void run() {
                 try {
-                    LauncherPanel.this.play.setEnabled(false);
                     LauncherPanel.this.username.setEnabled(false);
                     LauncherPanel.this.password.setEnabled(false);
                     launcher.config.addProperty("username", username.getText());
@@ -81,9 +80,6 @@ public class LauncherPanel extends JPanel {
                     launcher.startMinecraft((name, retry, failureMessage) -> password.getText(), progress -> {
                         LauncherPanel.this.currentProgress = progress;
                         if (progress == 100) {
-                            LauncherPanel.this.play.setEnabled(true);
-                            LauncherPanel.this.username.setEnabled(true);
-                            LauncherPanel.this.password.setEnabled(true);
                             frame.setVisible(false);
                         }
                     });
@@ -94,7 +90,7 @@ public class LauncherPanel extends JPanel {
         }.start());
         this.add(this.play);
 
-        this.password.addActionListener(e -> play.doClick());
+        this.password.addActionListener(e -> this.play.doClick());
     }
 
     public void loadAvatar(String username, ResourceLoader resourceLoader) {
@@ -105,7 +101,7 @@ public class LauncherPanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        this.play.setEnabled(!this.username.getText().isEmpty() && !this.password.getText().isEmpty());
+        this.play.setEnabled(this.username.isEnabled() && this.password.isEnabled() && !this.username.getText().isEmpty() && !this.password.getText().isEmpty());
         this.frame.setHeaderHeight(this.taskCount >= 0 ? 68 : 32);
 
         ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);

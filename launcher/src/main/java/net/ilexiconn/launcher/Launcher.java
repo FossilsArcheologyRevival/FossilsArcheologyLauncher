@@ -35,6 +35,7 @@ public class Launcher {
     public File configFile;
     public File cacheDir;
     public File modsDir;
+    public File modsVersionDir;
     public File configDir;
     public JsonObject config;
     public boolean isCached;
@@ -54,6 +55,7 @@ public class Launcher {
         this.configFile = new File(this.dataDir, "launcher.json");
         this.cacheDir = new File(this.dataDir, "cache");
         this.modsDir = new File(this.dataDir, "mods");
+        this.modsVersionDir = new File(this.modsDir, "1.7.10");
         this.configDir = new File(this.dataDir, "config");
 
         if (!this.dataDir.exists()) {
@@ -130,7 +132,6 @@ public class Launcher {
                 YggdrasilAuth.auth(this.config.get("username").getAsString(), passwordSupplier.getPassword(null, false, null));
             }
         } catch (ForbiddenOperationException e) {
-            this.frame.panel.play.setEnabled(true);
             this.frame.panel.username.setEnabled(true);
             this.frame.panel.password.setEnabled(true);
             return;
@@ -141,6 +142,9 @@ public class Launcher {
         if (!this.modsDir.exists()) {
             this.modsDir.mkdirs();
         }
+        if (!this.modsVersionDir.exists()) {
+            this.modsVersionDir.mkdirs();
+        }
         if (!this.configDir.exists()) {
             this.configDir.mkdirs();
         }
@@ -148,16 +152,15 @@ public class Launcher {
         if (files != null) {
             List<String> modNames = modList.stream().map(Mod::getFileName).collect(Collectors.toList());
             for (File file : files) {
-                if (!modNames.contains(file.getName())) {
+                if (!file.isDirectory() && !modNames.contains(file.getName())) {
                     System.out.println("Removing mod " + file.getName());
                     FileDeleteStrategy.FORCE.delete(file);
                 }
             }
         }
-        modList.removeIf(mod -> !mod.doDownload(new File(this.modsDir, mod.getFileName())));
+        modList.removeIf(mod -> !mod.doDownload(new File(mod.isVersionSpecific() ? this.modsVersionDir : this.modsDir, mod.getFileName())));
         Exception e = this.downloadMods(modList);
         if (e != null) {
-            this.frame.panel.play.setEnabled(true);
             this.frame.panel.username.setEnabled(true);
             this.frame.panel.password.setEnabled(true);
             return;
@@ -165,7 +168,7 @@ public class Launcher {
 
         final LaunchTask task = new LaunchTaskBuilder()
                 .setCachesDir(this.cacheDir.toPath())
-                .setForgeVersion("1.7.10", "1.7.10-10.13.4.1558-1.7.10")
+                .setForgeVersion("1.7.10", "1.7.10-10.13.4.1614-1.7.10")
                 .setInstanceDir(this.dataDir.toPath())
                 .setUsername(this.config.get("username").getAsString())
                 .setPasswordSupplier(passwordSupplier)
@@ -194,6 +197,8 @@ public class Launcher {
         }
 
         if (this.config.get("launcherBehaviour").getAsInt() != 0) {
+            this.frame.panel.username.setEnabled(true);
+            this.frame.panel.password.setEnabled(true);
             this.frame.setVisible(true);
             this.frame.requestFocus();
         } else {
@@ -208,7 +213,7 @@ public class Launcher {
         for (Mod mod : modList) {
             this.frame.panel.currentTask++;
             this.frame.panel.currentTaskName = this.translator.translate("ui.downloading_mod", mod);
-            Exception e = this.downloadFile(mod.getURL(), new File(this.modsDir, mod.getFileName()));
+            Exception e = this.downloadFile(mod.getURL(), new File(mod.isVersionSpecific() ? this.modsVersionDir : this.modsDir, mod.getFileName()));
             if (e != null) {
                 this.frame.panel.currentTaskName = e.getClass().getName();
                 return e;

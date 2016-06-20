@@ -13,6 +13,7 @@ public class Mod {
     private String fileName;
     private String url;
     private String md5;
+    private boolean versionSpecific;
 
     private boolean hasConfig;
     private ModConfig[] configs;
@@ -22,6 +23,7 @@ public class Mod {
         this.fileName = object.get("file").getAsString();
         this.url = object.get("url").getAsString();
         this.md5 = object.get("md5").getAsString();
+        this.versionSpecific = object.has("versionSpecific") && object.get("versionSpecific").getAsBoolean();
 
         this.hasConfig = object.has("config");
         if (this.hasConfig) {
@@ -47,6 +49,10 @@ public class Mod {
 
     public String getMD5() {
         return md5;
+    }
+
+    public boolean isVersionSpecific() {
+        return versionSpecific;
     }
 
     public boolean hasConfig() {
