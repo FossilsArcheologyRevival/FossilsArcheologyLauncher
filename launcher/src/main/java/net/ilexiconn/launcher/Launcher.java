@@ -159,7 +159,7 @@ public class Launcher {
             this.downloadFile(mod.getURL(), new File(this.modsDir, mod.getFileName()));
             if (mod.hasConfig()) {
                 System.out.println("Downloading config " + mod.getConfigFile());
-                this.downloadFile(mod.getConfigURL(), new File(this.modsDir, mod.getConfigFile()));
+                this.downloadFile(mod.getConfigURL(), new File(this.configDir, mod.getConfigFile()));
             }
         }
     }

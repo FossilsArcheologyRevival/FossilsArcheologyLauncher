@@ -19,7 +19,7 @@ public class Mod {
     public Mod(String fileName, JsonObject object) {
         this.fileName = fileName;
         this.url = object.get("url").getAsString();
-        this.md5 = object.get("url").getAsString();
+        this.md5 = object.get("md5").getAsString();
 
         this.hasConfig = object.has("config");
         if (this.hasConfig) {
