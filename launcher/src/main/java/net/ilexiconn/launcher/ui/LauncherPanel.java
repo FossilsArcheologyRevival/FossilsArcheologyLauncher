@@ -47,6 +47,8 @@ public class LauncherPanel extends JPanel {
             Map.Entry<String, JsonElement> entry = new ArrayList<>(launcher.cache.entrySet()).get(0);
             String username = entry.getValue().getAsJsonObject().get("selectedProfile").getAsJsonObject().get("name").getAsString();
             this.loadAvatar(username, resourceLoader);
+        } else {
+            this.loadAvatar("char", resourceLoader);
         }
 
         this.username = new JTextField(launcher.config.get("username").getAsString());

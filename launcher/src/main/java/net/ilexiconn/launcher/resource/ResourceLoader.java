@@ -25,6 +25,8 @@ public class ResourceLoader {
                 if (stream == null) {
                     stream = location.getInputStream();
                     location.cacheResource(stream, this.cacheDir);
+                    stream.close();
+                    stream = location.getInputStream();
                 }
                 BufferedImage image = ImageIO.read(stream);
                 stream.close();
