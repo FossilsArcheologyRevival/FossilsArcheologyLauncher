@@ -12,6 +12,8 @@ import uk.co.rx14.jmclaunchlib.LaunchSpec;
 import uk.co.rx14.jmclaunchlib.LaunchTask;
 import uk.co.rx14.jmclaunchlib.LaunchTaskBuilder;
 import uk.co.rx14.jmclaunchlib.auth.PasswordSupplier;
+import uk.co.rx14.jmclaunchlib.auth.YggdrasilAuth;
+import uk.co.rx14.jmclaunchlib.exceptions.ForbiddenOperationException;
 import uk.co.rx14.jmclaunchlib.util.OS;
 
 import java.io.*;
@@ -54,17 +56,6 @@ public class Launcher {
                 throw new RuntimeException("Failed to create data dir");
             }
         }
-        if (this.cacheDir.exists()) {
-            File authFile = new File(this.cacheDir, "auth.json");
-            this.isCached = authFile.exists();
-            if (this.isCached) {
-                try {
-                    this.cache = new JsonParser().parse(new FileReader(authFile)).getAsJsonObject();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
         if (this.configFile.exists()) {
             try {
                 this.config = new JsonParser().parse(new FileReader(this.configFile)).getAsJsonObject();
@@ -82,6 +73,17 @@ public class Launcher {
                 throw new RuntimeException("Failed to create the config file");
             }
             this.saveConfig();
+        }
+        if (this.cacheDir.exists()) {
+            File authFile = new File(this.cacheDir, "auth.json");
+            if (authFile.exists()) {
+                try {
+                    this.cache = new JsonParser().parse(new FileReader(authFile)).getAsJsonObject();
+                    this.isCached = this.cache.get(this.config.get("username").getAsString()).getAsJsonObject().get("valid").getAsBoolean();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         this.frame = new LauncherFrame(this);
     }
@@ -108,6 +110,17 @@ public class Launcher {
     }
 
     public void startMinecraft(PasswordSupplier passwordSupplier, final IProgressCallback progressCallback) throws IOException {
+        try {
+            if (!this.isCached) {
+                YggdrasilAuth.auth(this.config.get("username").getAsString(), passwordSupplier.getPassword(null, false, null));
+            }
+        } catch (ForbiddenOperationException e) {
+            this.frame.panel.play.setEnabled(true);
+            this.frame.panel.username.setEnabled(true);
+            this.frame.panel.password.setEnabled(true);
+            return;
+        }
+
         Map<String, JsonObject> map = new Gson().fromJson(new InputStreamReader(new URL(Launcher.URL).openStream()), new TypeToken<Map<String, JsonObject>>() {}.getType());
         List<Mod> modList = map.entrySet().stream().map(entry -> new Mod(entry.getKey(), entry.getValue())).collect(Collectors.toList());
         if (!this.modsDir.exists()) {
@@ -127,7 +140,11 @@ public class Launcher {
             }
         }
         modList.removeIf(mod -> !mod.doDownload(new File(this.modsDir, mod.getFileName())));
-        if (!this.downloadMods(modList)) {
+        Exception e = this.downloadMods(modList);
+        if (e != null) {
+            this.frame.panel.play.setEnabled(true);
+            this.frame.panel.username.setEnabled(true);
+            this.frame.panel.password.setEnabled(true);
             return;
         }
 
@@ -150,6 +167,7 @@ public class Launcher {
         }.start();
 
         LaunchSpec launchSpec = task.getSpec();
+        this.frame.panel.loadAvatar(launchSpec.getAuth().getSelectedProfile().getName());
         Process process = launchSpec.run(Paths.get(this.config.get("javaHome").getAsString(), "bin", OS.getCURRENT() == OS.WINDOWS ? "java.exe" : "java"));
 
         InputStream inputStream = process.getInputStream();
@@ -168,34 +186,36 @@ public class Launcher {
         }
     }
 
-    public boolean downloadMods(List<Mod> modList) {
+    public Exception downloadMods(List<Mod> modList) {
         this.frame.panel.taskCount = modList.size();
         modList.stream().filter(Mod::hasConfig).forEach(mod -> Arrays.asList(mod.getConfigs()).forEach(config -> this.frame.panel.taskCount++));
         this.frame.panel.currentTask = -1;
         for (Mod mod : modList) {
             this.frame.panel.currentTask++;
             this.frame.panel.currentTaskName = "Downloading mod " + mod;
-            if (!this.downloadFile(mod.getURL(), new File(this.modsDir, mod.getFileName()))) {
-                this.frame.panel.currentTaskName = "Something went wrong!";
-                return false;
+            Exception e = this.downloadFile(mod.getURL(), new File(this.modsDir, mod.getFileName()));
+            if (e != null) {
+                this.frame.panel.currentTaskName = e.getLocalizedMessage();
+                return e;
             }
             if (mod.hasConfig()) {
                 for (ModConfig config : mod.getConfigs()) {
                     this.frame.panel.currentTask++;
                     this.frame.panel.currentTaskName = "Downloading config " + config.getFile() + " for mod " + mod;
-                    if (!this.downloadFile(config.getURL(), new File(this.configDir, config.getFile()))) {
-                        this.frame.panel.currentTaskName = "Something went wrong!";
-                        return false;
+                    e = this.downloadFile(config.getURL(), new File(this.configDir, config.getFile()));
+                    if (e != null) {
+                        this.frame.panel.currentTaskName = e.getLocalizedMessage();
+                        return e;
                     }
                 }
             }
         }
         this.frame.panel.currentTaskName = "Launching Minecraft";
         this.frame.panel.currentTask++;
-        return true;
+        return null;
     }
 
-    public boolean downloadFile(String string, File file) {
+    public Exception downloadFile(String string, File file) {
         try {
             this.frame.panel.currentProgress = 0;
             URL url = new URL(string);
@@ -215,10 +235,10 @@ public class Launcher {
             bufferedOutputStream.close();
             inputStream.close();
             this.frame.panel.currentProgress = 0;
-            return true;
+            return null;
         } catch (IOException e) {
             e.printStackTrace();
-            return false;
+            return e;
         }
     }
 

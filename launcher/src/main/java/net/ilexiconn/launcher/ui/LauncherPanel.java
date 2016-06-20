@@ -41,7 +41,7 @@ public class LauncherPanel extends JPanel {
             if (launcher.isCached) {
                 Map.Entry<String, JsonElement> entry = new ArrayList<>(launcher.cache.entrySet()).get(0);
                 String username = entry.getValue().getAsJsonObject().get("selectedProfile").getAsJsonObject().get("name").getAsString();
-                this.avatar = ImageIO.read(new URL("https://minotar.net/helm/" + username + "/70.png"));
+                this.loadAvatar(username);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -74,17 +74,7 @@ public class LauncherPanel extends JPanel {
                     LauncherPanel.this.password.setEnabled(false);
                     launcher.config.addProperty("username", username.getText());
                     launcher.saveConfig();
-                    launcher.startMinecraft((name, retry, failureMessage) -> {
-                        if (retry) {
-                            LauncherPanel.this.play.setEnabled(true);
-                            LauncherPanel.this.username.setEnabled(true);
-                            LauncherPanel.this.password.setEnabled(true);
-                            LauncherPanel.this.taskCount = -1;
-                            return null;
-                        } else {
-                            return password.getText();
-                        }
-                    }, progress -> {
+                    launcher.startMinecraft((name, retry, failureMessage) -> password.getText(), progress -> {
                         LauncherPanel.this.currentProgress = progress;
                         if (progress == 100) {
                             LauncherPanel.this.play.setEnabled(true);
@@ -101,6 +91,14 @@ public class LauncherPanel extends JPanel {
         this.add(this.play);
 
         this.password.addActionListener(e -> play.doClick());
+    }
+
+    public void loadAvatar(String username) {
+        try {
+            this.avatar = ImageIO.read(new URL("https://minotar.net/helm/" + username + "/70.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
