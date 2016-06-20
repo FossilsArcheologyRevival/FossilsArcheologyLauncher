@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import net.ilexiconn.launcher.ui.IProgressCallback;
 import net.ilexiconn.launcher.ui.LauncherFrame;
+import org.apache.commons.io.FileDeleteStrategy;
 import org.apache.commons.io.FileUtils;
 import uk.co.rx14.jmclaunchlib.LaunchSpec;
 import uk.co.rx14.jmclaunchlib.LaunchTask;
@@ -12,6 +13,7 @@ import uk.co.rx14.jmclaunchlib.auth.PasswordSupplier;
 import uk.co.rx14.jmclaunchlib.util.OS;
 
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
@@ -26,6 +28,8 @@ public class Launcher {
     public File dataDir;
     public File configFile;
     public File cacheDir;
+    public File modsDir;
+    public File configDir;
     public JsonObject config;
     public boolean isCached;
 
@@ -40,6 +44,8 @@ public class Launcher {
         this.dataDir = portable ? new File(".") : this.getDataFolder();
         this.configFile = new File(this.dataDir, "launcher.json");
         this.cacheDir = new File(this.dataDir, "cache");
+        this.modsDir = new File(this.dataDir, "mods");
+        this.configDir = new File(this.dataDir, "config");
         if (!this.dataDir.exists()) {
             if (!this.dataDir.mkdirs()) {
                 throw new RuntimeException("Failed to create data dir");
@@ -92,9 +98,22 @@ public class Launcher {
     }
 
     public void startMinecraft(PasswordSupplier passwordSupplier, final IProgressCallback progressCallback) throws IOException {
-        Map<String, JsonObject> map = new Gson().fromJson(new InputStreamReader(new URL(Launcher.URL).openStream()), new TypeToken<Map<String, JsonObject>>() {}.getType());
+        Map<String, JsonObject> map = new Gson().fromJson(new InputStreamReader(new URL(Launcher.URL).openStream()), new TypeToken<Map<String, JsonObject>>() {
+        }.getType());
         List<Mod> modList = map.entrySet().stream().map(entry -> new Mod(entry.getKey(), entry.getValue())).collect(Collectors.toList());
-        modList.removeIf(mod -> !mod.replace(null));
+        if (!this.modsDir.exists()) {
+            this.modsDir.mkdirs();
+        }
+        File[] files = this.modsDir.listFiles();
+        if (files != null) {
+            List<String> modNames = modList.stream().map(Mod::getFileName).collect(Collectors.toList());
+            for (File file : files) {
+                if (!modNames.contains(file.getName())) {
+                    FileDeleteStrategy.FORCE.delete(file);
+                }
+            }
+        }
+        modList.removeIf(mod -> !mod.doDownload(new File(this.modsDir, mod.getFileName())));
         this.downloadMods(modList);
 
         final LaunchTask task = new LaunchTaskBuilder()
@@ -134,7 +153,39 @@ public class Launcher {
     }
 
     public void downloadMods(List<Mod> modList) {
+        for (Mod mod : modList) {
+            System.out.println("Downloading mod " + mod.getFileName());
+            this.downloadFile(mod.getURL(), new File(this.modsDir, mod.getFileName()));
+            if (mod.hasConfig()) {
+                System.out.println("Downloading config " + mod.getConfigFile());
+                this.downloadFile(mod.getConfigURL(), new File(this.modsDir, mod.getConfigFile()));
+            }
+        }
+    }
 
+    public void downloadFile(String string, File file) {
+        try {
+            this.frame.panel.currentProgress = 0;
+            URL url = new URL(string);
+            HttpURLConnection connection = (HttpURLConnection) (url.openConnection());
+            long contentLength = connection.getContentLength();
+            InputStream inputStream = new BufferedInputStream(connection.getInputStream());
+            OutputStream outputStream = new FileOutputStream(file);
+            OutputStream bufferedOutputStream = new BufferedOutputStream(outputStream, 1024);
+            byte[] data = new byte[1024];
+            long downloaded = 0;
+            int i;
+            while ((i = inputStream.read(data, 0, 1024)) >= 0) {
+                downloaded += i;
+                this.frame.panel.currentProgress = (int) ((((double) downloaded) / ((double) contentLength)) * 100.0D);
+                bufferedOutputStream.write(data, 0, i);
+            }
+            bufferedOutputStream.close();
+            inputStream.close();
+            this.frame.panel.currentProgress = 0;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public File getDataFolder() {

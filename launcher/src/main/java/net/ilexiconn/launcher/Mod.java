@@ -53,12 +53,12 @@ public class Mod {
         return configURL;
     }
 
-    public boolean replace(File old) {
-        if (!old.exists()) {
+    public boolean doDownload(File file) {
+        if (!file.exists()) {
             return true;
         } else {
             try {
-                String md5 = Files.hash(old, Hashing.md5()).toString();
+                String md5 = Files.hash(file, Hashing.md5()).toString();
                 return !this.getMD5().equals(md5);
             } catch (IOException e) {
                 e.printStackTrace();

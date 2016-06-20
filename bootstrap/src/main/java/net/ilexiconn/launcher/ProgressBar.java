@@ -44,12 +44,9 @@ public class Progressbar {
                         downloaded += i;
 
                         final int currentProgress = (int) ((((double) downloaded) / ((double) contentLength)) * 100.0D);
-                        SwingUtilities.invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                progressBar.setValue(currentProgress);
-                                progressBar.setString(currentProgress + "%");
-                            }
+                        SwingUtilities.invokeLater(() -> {
+                            progressBar.setValue(currentProgress);
+                            progressBar.setString(currentProgress + "%");
                         });
 
                         bufferedOutputStream.write(data, 0, i);
@@ -59,8 +56,6 @@ public class Progressbar {
                     frame.setVisible(false);
                     frame.dispose();
                     callback.call();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

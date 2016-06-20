@@ -114,20 +114,17 @@ public class Bootstrap {
                     throw new RuntimeException("Failed to remove old jar");
                 }
             }
-            this.progressbar.display(this.newerURL, this.launcherFile, new Progressbar.IProgressbarCallback() {
-                @Override
-                public void call() {
-                    JsonObject object = new JsonObject();
-                    object.addProperty("version", Bootstrap.this.newerVersion.get());
-                    String json = Bootstrap.this.gson.toJson(object);
-                    try {
-                        FileUtils.writeStringToFile(Bootstrap.this.bootstrapFile, json, Charsets.UTF_8);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println("Update complete!");
-                    Bootstrap.this.launch();
+            this.progressbar.display(this.newerURL, this.launcherFile, () -> {
+                JsonObject object = new JsonObject();
+                object.addProperty("version", Bootstrap.this.newerVersion.get());
+                String json = Bootstrap.this.gson.toJson(object);
+                try {
+                    FileUtils.writeStringToFile(Bootstrap.this.bootstrapFile, json, Charsets.UTF_8);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
+                System.out.println("Update complete!");
+                Bootstrap.this.launch();
             });
         } else {
             this.launch();

@@ -6,6 +6,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class LauncherFrame extends DraggableFrame {
+    public LauncherPanel panel;
+
     public LauncherFrame(Launcher launcher) {
         super(32);
 
@@ -52,7 +54,7 @@ public class LauncherFrame extends DraggableFrame {
         minimizeButton.addActionListener(e -> LauncherFrame.this.setExtendedState(JFrame.ICONIFIED));
         header.add(minimizeButton);
 
-        this.add(new LauncherPanel(this, launcher), BorderLayout.CENTER);
+        this.add(this.panel = new LauncherPanel(this, launcher), BorderLayout.CENTER);
 
         this.setVisible(true);
     }
