@@ -1,9 +1,8 @@
 package net.ilexiconn.launcher;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
+import net.ilexiconn.launcher.ui.IProgressCallback;
 import net.ilexiconn.launcher.ui.LauncherFrame;
 import org.apache.commons.io.FileUtils;
 import uk.co.rx14.jmclaunchlib.LaunchSpec;
@@ -13,11 +12,17 @@ import uk.co.rx14.jmclaunchlib.auth.PasswordSupplier;
 import uk.co.rx14.jmclaunchlib.util.OS;
 
 import java.io.*;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Launcher {
+    public static final String URL = "http://pastebin.com/raw/EiE1kiP5";
+
     public File dataDir;
     public File configFile;
     public File cacheDir;
@@ -68,7 +73,7 @@ public class Launcher {
     public void writeDefaultConfig(JsonObject config) {
         config.addProperty("username", "");
         config.addProperty("javaHome", System.getProperty("java.home"));
-        config.addProperty("keepLauncherOpen", false);
+        config.addProperty("launcherBehaviour", 0);
         JsonArray array = new JsonArray();
         array.add("-Xmx1G");
         array.add("-XX:+UseConcMarkSweepGC");
@@ -80,13 +85,18 @@ public class Launcher {
 
     public void saveConfig() {
         try {
-            FileUtils.writeStringToFile(this.configFile, new GsonBuilder().setPrettyPrinting().create().toJson(this.config));
+            FileUtils.writeStringToFile(this.configFile, new GsonBuilder().setPrettyPrinting().create().toJson(this.config), Charset.defaultCharset());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void startMinecraft(PasswordSupplier passwordSupplier, final IProgressCallback progressCallback) throws IOException {
+        Map<String, JsonObject> map = new Gson().fromJson(new InputStreamReader(new URL(Launcher.URL).openStream()), new TypeToken<Map<String, JsonObject>>() {}.getType());
+        List<Mod> modList = map.entrySet().stream().map(entry -> new Mod(entry.getKey(), entry.getValue())).collect(Collectors.toList());
+        modList.removeIf(mod -> !mod.replace(null));
+        this.downloadMods(modList);
+
         final LaunchTask task = new LaunchTaskBuilder()
                 .setCachesDir(this.cacheDir.toPath())
                 .setForgeVersion("1.7.10", "1.7.10-10.13.4.1558-1.7.10")
@@ -115,6 +125,16 @@ public class Launcher {
         while ((line = bufferedReader.readLine()) != null) {
             System.out.println(line);
         }
+        if (this.config.get("launcherBehaviour").getAsInt() != 0) {
+            this.frame.setVisible(true);
+            this.frame.requestFocus();
+        } else {
+            this.frame.dispose();
+        }
+    }
+
+    public void downloadMods(List<Mod> modList) {
+
     }
 
     public File getDataFolder() {

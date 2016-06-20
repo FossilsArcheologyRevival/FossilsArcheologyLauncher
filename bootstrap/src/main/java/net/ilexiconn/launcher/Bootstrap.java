@@ -84,8 +84,7 @@ public class Bootstrap {
     }
 
     public void start() throws IOException {
-        Map<Version, JsonObject> map = this.gson.fromJson(new InputStreamReader(new URL(Bootstrap.URL).openStream()), new TypeToken<Map<Version, JsonObject>>() {
-        }.getType());
+        Map<Version, JsonObject> map = this.gson.fromJson(new InputStreamReader(new URL(Bootstrap.URL).openStream()), new TypeToken<Map<Version, JsonObject>>() {}.getType());
         for (Map.Entry<Version, JsonObject> entry : map.entrySet()) {
             int compare = entry.getKey().compareTo(this.currentVersion);
             if (compare > 0) {

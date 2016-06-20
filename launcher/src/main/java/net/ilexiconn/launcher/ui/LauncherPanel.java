@@ -1,13 +1,9 @@
 package net.ilexiconn.launcher.ui;
 
-import net.ilexiconn.launcher.IProgressCallback;
 import net.ilexiconn.launcher.Launcher;
-import uk.co.rx14.jmclaunchlib.auth.PasswordSupplier;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 
 public class LauncherPanel extends JPanel {
@@ -36,55 +32,41 @@ public class LauncherPanel extends JPanel {
         play.setIcon(new ImageIcon(LauncherFrame.class.getResource("/play.png")));
         play.setRolloverIcon(new ImageIcon(LauncherFrame.class.getResource("/play_hover.png")));
         play.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        play.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new Thread() {
-                    public void run() {
-                        try {
-                            play.setEnabled(false);
-                            username.setEnabled(false);
-                            password.setEnabled(false);
-                            launcher.config.addProperty("username", username.getText());
-                            launcher.saveConfig();
-                            launcher.startMinecraft(new PasswordSupplier() {
-                                @Override
-                                public String getPassword(String name, boolean retry, String failureMessage) {
-                                    if (retry) {
-                                        play.setEnabled(true);
-                                        username.setEnabled(true);
-                                        password.setEnabled(true);
-                                        return null;
-                                    } else {
-                                        return password.getText();
-                                    }
-                                }
-                            }, new IProgressCallback() {
-                                @Override
-                                public void onProgress(int progress) {
-                                    LauncherPanel.this.currentProgress = progress;
-                                    if (progress == 100 && !launcher.config.get("keepLauncherOpen").getAsBoolean()) {
-                                        frame.setVisible(false);
-                                        frame.dispose();
-                                        LauncherPanel.this.currentProgress = 0;
-                                    }
-                                }
-                            });
-                        } catch (IOException e1) {
-                            e1.printStackTrace();
+        play.addActionListener(e -> new Thread() {
+            public void run() {
+                try {
+                    play.setEnabled(false);
+                    username.setEnabled(false);
+                    password.setEnabled(false);
+                    launcher.config.addProperty("username", username.getText());
+                    launcher.saveConfig();
+                    launcher.startMinecraft((name, retry, failureMessage) -> {
+                        if (retry) {
+                            play.setEnabled(true);
+                            username.setEnabled(true);
+                            password.setEnabled(true);
+                            return null;
+                        } else {
+                            return password.getText();
                         }
-                    }
-                }.start();
+                    }, progress -> {
+                        LauncherPanel.this.currentProgress = progress;
+                        LauncherPanel.this.currentProgress = 0;
+                        if (progress == 100) {
+                            play.setEnabled(true);
+                            username.setEnabled(true);
+                            password.setEnabled(true);
+                            frame.setVisible(false);
+                        }
+                    });
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
             }
-        });
+        }.start());
         this.add(play);
 
-        password.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                play.doClick();
-            }
-        });
+        password.addActionListener(e -> play.doClick());
     }
 
     @Override

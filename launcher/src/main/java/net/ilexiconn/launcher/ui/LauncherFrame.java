@@ -4,8 +4,6 @@ import net.ilexiconn.launcher.Launcher;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class LauncherFrame extends DraggableFrame {
     public LauncherFrame(Launcher launcher) {
@@ -38,12 +36,9 @@ public class LauncherFrame extends DraggableFrame {
         closeButton.setContentAreaFilled(false);
         closeButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         closeButton.setFocusPainted(false);
-        closeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                LauncherFrame.this.setVisible(false);
-                LauncherFrame.this.dispose();
-            }
+        closeButton.addActionListener(e -> {
+            LauncherFrame.this.setVisible(false);
+            LauncherFrame.this.dispose();
         });
         header.add(closeButton);
 
@@ -54,12 +49,7 @@ public class LauncherFrame extends DraggableFrame {
         minimizeButton.setContentAreaFilled(false);
         minimizeButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         minimizeButton.setFocusPainted(false);
-        minimizeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                LauncherFrame.this.setExtendedState(JFrame.ICONIFIED);
-            }
-        });
+        minimizeButton.addActionListener(e -> LauncherFrame.this.setExtendedState(JFrame.ICONIFIED));
         header.add(minimizeButton);
 
         this.add(new LauncherPanel(this, launcher), BorderLayout.CENTER);
