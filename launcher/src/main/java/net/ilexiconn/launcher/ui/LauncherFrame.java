@@ -3,6 +3,7 @@ package net.ilexiconn.launcher.ui;
 import net.ilexiconn.launcher.Launcher;
 import net.ilexiconn.launcher.resource.ResourceLoader;
 import net.ilexiconn.launcher.resource.ResourceLocation;
+import net.ilexiconn.launcher.resource.lang.Translator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,7 +16,7 @@ public class LauncherFrame extends DraggableFrame {
 
     public LauncherPanel panel;
 
-    public LauncherFrame(Launcher launcher, ResourceLoader resourceLoader) {
+    public LauncherFrame(Launcher launcher, ResourceLoader resourceLoader, Translator translator) {
         super(32);
 
         try {
@@ -60,7 +61,7 @@ public class LauncherFrame extends DraggableFrame {
         minimizeButton.addActionListener(e -> LauncherFrame.this.setExtendedState(JFrame.ICONIFIED));
         header.add(minimizeButton);
 
-        this.add(this.panel = new LauncherPanel(this, launcher, resourceLoader), BorderLayout.CENTER);
+        this.add(this.panel = new LauncherPanel(this, launcher, resourceLoader, translator), BorderLayout.CENTER);
 
         this.setVisible(true);
     }

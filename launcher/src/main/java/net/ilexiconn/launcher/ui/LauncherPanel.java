@@ -5,6 +5,7 @@ import net.ilexiconn.launcher.Launcher;
 import net.ilexiconn.launcher.resource.RemoteResourceLocation;
 import net.ilexiconn.launcher.resource.ResourceLoader;
 import net.ilexiconn.launcher.resource.ResourceLocation;
+import net.ilexiconn.launcher.resource.lang.Translator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +36,7 @@ public class LauncherPanel extends JPanel {
     public JTextField password;
     public JButton play;
 
-    public LauncherPanel(final LauncherFrame frame, final Launcher launcher, ResourceLoader resourceLoader) {
+    public LauncherPanel(final LauncherFrame frame, final Launcher launcher, ResourceLoader resourceLoader, Translator translator) {
         super(true);
         this.frame = frame;
         this.launcher = launcher;

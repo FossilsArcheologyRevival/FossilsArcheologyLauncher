@@ -1,0 +1,5 @@
+{
+  "ui.launching_mc": "Launching Minecraft",
+  "ui.downloading_mod": "Downloading mod %s",
+  "ui.downloading_config": "Downloading config %s for mod %s"
+}

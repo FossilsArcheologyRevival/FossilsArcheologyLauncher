@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import net.ilexiconn.launcher.mod.Mod;
 import net.ilexiconn.launcher.mod.ModConfig;
 import net.ilexiconn.launcher.resource.ResourceLoader;
+import net.ilexiconn.launcher.resource.lang.Translator;
 import net.ilexiconn.launcher.ui.IProgressCallback;
 import net.ilexiconn.launcher.ui.LauncherFrame;
 import org.apache.commons.io.FileDeleteStrategy;
@@ -39,8 +40,9 @@ public class Launcher {
     public boolean isCached;
     public JsonObject cache;
 
-    private LauncherFrame frame;
     private ResourceLoader resourceLoader;
+    private Translator translator;
+    private LauncherFrame frame;
 
     public static void main(String[] args) {
         List<String> argumentList = Arrays.asList(args);
@@ -96,13 +98,15 @@ public class Launcher {
         }
 
         this.resourceLoader = new ResourceLoader(this.cacheDir);
-        this.frame = new LauncherFrame(this, this.resourceLoader);
+        this.translator = new Translator(this.config.get("language").getAsString(), this.resourceLoader);
+        this.frame = new LauncherFrame(this, this.resourceLoader, this.translator);
     }
 
     public void writeDefaultConfig(JsonObject config) {
         config.addProperty("username", "");
         config.addProperty("javaHome", System.getProperty("java.home"));
         config.addProperty("launcherBehaviour", 0);
+        config.addProperty("language", Translator.DEFAULT_LANGUAGE);
         JsonArray array = new JsonArray();
         array.add("-Xmx1G");
         array.add("-XX:+UseConcMarkSweepGC");
@@ -203,7 +207,7 @@ public class Launcher {
         this.frame.panel.currentTask = -1;
         for (Mod mod : modList) {
             this.frame.panel.currentTask++;
-            this.frame.panel.currentTaskName = "Downloading mod " + mod;
+            this.frame.panel.currentTaskName = this.translator.translate("ui.downloading_mod", mod);
             Exception e = this.downloadFile(mod.getURL(), new File(this.modsDir, mod.getFileName()));
             if (e != null) {
                 this.frame.panel.currentTaskName = e.getClass().getName();
@@ -212,7 +216,7 @@ public class Launcher {
             if (mod.hasConfig()) {
                 for (ModConfig config : mod.getConfigs()) {
                     this.frame.panel.currentTask++;
-                    this.frame.panel.currentTaskName = "Downloading config " + config.getFile() + " for mod " + mod;
+                    this.frame.panel.currentTaskName = this.translator.translate("ui.downloading_config", config.getFile(), mod);
                     e = this.downloadFile(config.getURL(), new File(this.configDir, config.getFile()));
                     if (e != null) {
                         this.frame.panel.currentTaskName = e.getClass().getName();
@@ -221,7 +225,7 @@ public class Launcher {
                 }
             }
         }
-        this.frame.panel.currentTaskName = "Launching Minecraft";
+        this.frame.panel.currentTaskName = this.translator.translate("ui.launching_mc");
         this.frame.panel.currentTask++;
         return null;
     }

@@ -43,4 +43,13 @@ public class ResourceLoader {
         }
         return this.iconMap.get(location.getLocation());
     }
+
+    public InputStream loadStream(ResourceLocation location) {
+        try {
+            return location.getInputStream();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
