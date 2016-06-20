@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class Mod {
+    private String name;
     private String fileName;
     private String url;
     private String md5;
@@ -16,8 +17,9 @@ public class Mod {
     private boolean hasConfig;
     private ModConfig[] configs;
 
-    public Mod(String fileName, JsonObject object) {
-        this.fileName = fileName;
+    public Mod(String name, JsonObject object) {
+        this.name = name;
+        this.fileName = object.get("file").getAsString();
         this.url = object.get("url").getAsString();
         this.md5 = object.get("md5").getAsString();
 
@@ -29,6 +31,10 @@ public class Mod {
                 this.configs[i] = new ModConfig(array.get(i).getAsJsonObject());
             }
         }
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String getFileName() {
@@ -67,6 +73,6 @@ public class Mod {
 
     @Override
     public String toString() {
-        return this.getFileName() + "[url: " + this.getURL() + ", md5: " + this.getMD5() + ", config: " + this.hasConfig() + "]";
+        return this.getName();
     }
 }

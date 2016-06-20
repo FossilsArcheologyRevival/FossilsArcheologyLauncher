@@ -2,10 +2,6 @@ package net.ilexiconn.launcher;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import com.rometools.rome.feed.synd.SyndFeed;
-import com.rometools.rome.io.FeedException;
-import com.rometools.rome.io.SyndFeedInput;
-import com.rometools.rome.io.XmlReader;
 import net.ilexiconn.launcher.mod.Mod;
 import net.ilexiconn.launcher.mod.ModConfig;
 import net.ilexiconn.launcher.ui.IProgressCallback;
@@ -30,7 +26,6 @@ import java.util.stream.Collectors;
 
 public class Launcher {
     public static final String URL = "http://pastebin.com/raw/EiE1kiP5";
-    public static final String RSS_URL = "http://fossils.enjin.com/api/rss.php?preset_id=33718204";
 
     public File dataDir;
     public File configFile;
@@ -39,9 +34,9 @@ public class Launcher {
     public File configDir;
     public JsonObject config;
     public boolean isCached;
+    public JsonObject cache;
 
     public LauncherFrame frame;
-    public SyndFeed feed;
 
     public static void main(String[] args) {
         List<String> argumentList = Arrays.asList(args);
@@ -62,6 +57,13 @@ public class Launcher {
         if (this.cacheDir.exists()) {
             File authFile = new File(this.cacheDir, "auth.json");
             this.isCached = authFile.exists();
+            if (this.isCached) {
+                try {
+                    this.cache = new JsonParser().parse(new FileReader(authFile)).getAsJsonObject();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         if (this.configFile.exists()) {
             try {
@@ -82,13 +84,6 @@ public class Launcher {
             this.saveConfig();
         }
         this.frame = new LauncherFrame(this);
-
-        try {
-            SyndFeedInput input = new SyndFeedInput();
-            this.feed = input.build(new XmlReader(new URL(Launcher.RSS_URL)));
-        } catch (FeedException | IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void writeDefaultConfig(JsonObject config) {
@@ -118,6 +113,9 @@ public class Launcher {
         if (!this.modsDir.exists()) {
             this.modsDir.mkdirs();
         }
+        if (!this.configDir.exists()) {
+            this.configDir.mkdirs();
+        }
         File[] files = this.modsDir.listFiles();
         if (files != null) {
             List<String> modNames = modList.stream().map(Mod::getFileName).collect(Collectors.toList());
@@ -129,7 +127,9 @@ public class Launcher {
             }
         }
         modList.removeIf(mod -> !mod.doDownload(new File(this.modsDir, mod.getFileName())));
-        this.downloadMods(modList);
+        if (!this.downloadMods(modList)) {
+            return;
+        }
 
         final LaunchTask task = new LaunchTaskBuilder()
                 .setCachesDir(this.cacheDir.toPath())
@@ -168,26 +168,34 @@ public class Launcher {
         }
     }
 
-    public void downloadMods(List<Mod> modList) {
+    public boolean downloadMods(List<Mod> modList) {
         this.frame.panel.taskCount = modList.size();
         modList.stream().filter(Mod::hasConfig).forEach(mod -> Arrays.asList(mod.getConfigs()).forEach(config -> this.frame.panel.taskCount++));
         this.frame.panel.currentTask = -1;
         for (Mod mod : modList) {
             this.frame.panel.currentTask++;
-            System.out.println("Downloading mod " + mod);
-            this.downloadFile(mod.getURL(), new File(this.modsDir, mod.getFileName()));
+            this.frame.panel.currentTaskName = "Downloading mod " + mod;
+            if (!this.downloadFile(mod.getURL(), new File(this.modsDir, mod.getFileName()))) {
+                this.frame.panel.currentTaskName = "Something went wrong!";
+                return false;
+            }
             if (mod.hasConfig()) {
                 for (ModConfig config : mod.getConfigs()) {
                     this.frame.panel.currentTask++;
-                    System.out.println("Downloading config " + config.getFile() + " for mod " + mod);
-                    this.downloadFile(config.getURL(), new File(this.configDir, config.getFile()));
+                    this.frame.panel.currentTaskName = "Downloading config " + config.getFile() + " for mod " + mod;
+                    if (!this.downloadFile(config.getURL(), new File(this.configDir, config.getFile()))) {
+                        this.frame.panel.currentTaskName = "Something went wrong!";
+                        return false;
+                    }
                 }
             }
         }
+        this.frame.panel.currentTaskName = "Launching Minecraft";
         this.frame.panel.currentTask++;
+        return true;
     }
 
-    public void downloadFile(String string, File file) {
+    public boolean downloadFile(String string, File file) {
         try {
             this.frame.panel.currentProgress = 0;
             URL url = new URL(string);
@@ -207,8 +215,10 @@ public class Launcher {
             bufferedOutputStream.close();
             inputStream.close();
             this.frame.panel.currentProgress = 0;
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
     }
 

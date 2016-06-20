@@ -1,16 +1,16 @@
 package net.ilexiconn.launcher.ui;
 
-import com.rometools.rome.feed.synd.SyndEntry;
+import com.google.gson.JsonElement;
 import net.ilexiconn.launcher.Launcher;
-import org.jsoup.Jsoup;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Map;
 
 public class LauncherPanel extends JPanel {
     public static final Color GREEN = new Color(82, 191, 94);
@@ -19,10 +19,15 @@ public class LauncherPanel extends JPanel {
     public int currentProgress;
     public int taskCount = -1;
     public int currentTask;
+    public String currentTaskName;
 
     public Launcher launcher;
-    public Font font;
     public BufferedImage banner;
+    public BufferedImage avatar;
+
+    public JTextField username;
+    public JTextField password;
+    public JButton play;
 
     public LauncherPanel(final LauncherFrame frame, final Launcher launcher) {
         super(true);
@@ -30,58 +35,59 @@ public class LauncherPanel extends JPanel {
         this.setLayout(null);
 
         try {
-            this.font = Font.createFont(Font.TRUETYPE_FONT, LauncherPanel.class.getResourceAsStream("/roboto_thin.ttf"));
-            this.font = this.font.deriveFont(Font.PLAIN, 32);
             this.banner = ImageIO.read(LauncherPanel.class.getResourceAsStream("/banner.png"));
-        } catch (FontFormatException | IOException e) {
+            if (launcher.isCached) {
+                Map.Entry<String, JsonElement> entry = new ArrayList<>(launcher.cache.entrySet()).get(0);
+                String username = entry.getValue().getAsJsonObject().get("selectedProfile").getAsJsonObject().get("name").getAsString();
+                this.avatar = ImageIO.read(new URL("https://minotar.net/helm/" + username + "/70.png"));
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        final JTextField username = new JTextField(launcher.config.get("username").getAsString());
-        username.setBounds(604, 368, 200, 30);
-        username.setBorder(BorderFactory.createEmptyBorder());
-        username.setFont(this.font.deriveFont(Font.PLAIN, 20));
-        this.add(username);
+        this.username = new JTextField(launcher.config.get("username").getAsString());
+        this.username.setBounds(604, 368, 200, 30);
+        this.username.setBorder(BorderFactory.createEmptyBorder());
+        this.add(this.username);
 
-        final JTextField password = new JPasswordField(launcher.isCached ? "password" : "");
-        password.setBounds(604, 408, 200, 30);
-        password.setBorder(BorderFactory.createEmptyBorder());
-        password.setFont(this.font.deriveFont(Font.PLAIN, 20));
-        ((JPasswordField) password).setEchoChar('*');
-        this.add(password);
+        this.password = new JPasswordField(launcher.isCached ? "password" : "");
+        this.password.setBounds(604, 408, 200, 30);
+        this.password.setBorder(BorderFactory.createEmptyBorder());
+        ((JPasswordField) this.password).setEchoChar('*');
+        this.add(this.password);
 
-        final JButton play = new JButton();
-        play.setBounds(814, 368, 30, 70);
-        play.setBorder(BorderFactory.createEmptyBorder());
-        play.setContentAreaFilled(false);
-        play.setIcon(new ImageIcon(LauncherFrame.class.getResource("/play.png")));
-        play.setRolloverIcon(new ImageIcon(LauncherFrame.class.getResource("/play_hover.png")));
-        play.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        play.setFocusPainted(false);
-        play.addActionListener(e -> new Thread() {
+        this.play = new JButton();
+        this.play.setBounds(814, 368, 30, 70);
+        this.play.setBorder(BorderFactory.createEmptyBorder());
+        this.play.setContentAreaFilled(false);
+        this.play.setIcon(new ImageIcon(LauncherFrame.class.getResource("/play.png")));
+        this.play.setRolloverIcon(new ImageIcon(LauncherFrame.class.getResource("/play_hover.png")));
+        this.play.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        this.play.setFocusPainted(false);
+        this.play.addActionListener(e -> new Thread() {
             public void run() {
                 try {
-                    play.setEnabled(false);
-                    username.setEnabled(false);
-                    password.setEnabled(false);
+                    LauncherPanel.this.play.setEnabled(false);
+                    LauncherPanel.this.username.setEnabled(false);
+                    LauncherPanel.this.password.setEnabled(false);
                     launcher.config.addProperty("username", username.getText());
                     launcher.saveConfig();
                     launcher.startMinecraft((name, retry, failureMessage) -> {
                         if (retry) {
-                            play.setEnabled(true);
-                            username.setEnabled(true);
-                            password.setEnabled(true);
+                            LauncherPanel.this.play.setEnabled(true);
+                            LauncherPanel.this.username.setEnabled(true);
+                            LauncherPanel.this.password.setEnabled(true);
+                            LauncherPanel.this.taskCount = -1;
                             return null;
                         } else {
                             return password.getText();
                         }
                     }, progress -> {
                         LauncherPanel.this.currentProgress = progress;
-                        LauncherPanel.this.currentProgress = 0;
                         if (progress == 100) {
-                            play.setEnabled(true);
-                            username.setEnabled(true);
-                            password.setEnabled(true);
+                            LauncherPanel.this.play.setEnabled(true);
+                            LauncherPanel.this.username.setEnabled(true);
+                            LauncherPanel.this.password.setEnabled(true);
                             frame.setVisible(false);
                         }
                     });
@@ -90,42 +96,16 @@ public class LauncherPanel extends JPanel {
                 }
             }
         }.start());
-        this.add(play);
+        this.add(this.play);
 
-        password.addActionListener(e -> play.doClick());
-
-        new Thread() {
-            public void run() {
-                while (LauncherPanel.this.launcher.feed == null) {
-                    System.out.print("");
-                }
-
-                SyndEntry entry = LauncherPanel.this.launcher.feed.getEntries().get(0);
-                JButton button = new JButton();
-                button.setBounds(570, 413, 19, 19);
-                button.setBorder(BorderFactory.createEmptyBorder());
-                button.setContentAreaFilled(false);
-                button.setIcon(new ImageIcon(LauncherFrame.class.getResource("/more.png")));
-                button.setRolloverIcon(new ImageIcon(LauncherFrame.class.getResource("/more_hover.png")));
-                button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                button.setFocusPainted(false);
-                button.addActionListener(e -> {
-                    if (Desktop.isDesktopSupported()) {
-                        try {
-                            Desktop.getDesktop().browse(new URI(entry.getUri()));
-                        } catch (IOException | URISyntaxException e1) {
-                            e1.printStackTrace();
-                        }
-                    }
-                });
-                LauncherPanel.this.add(button);
-            }
-        }.start();
+        this.password.addActionListener(e -> play.doClick());
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+
+        this.play.setEnabled(!this.username.getText().isEmpty() && !this.password.getText().isEmpty());
 
         ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
 
@@ -135,30 +115,24 @@ public class LauncherPanel extends JPanel {
         g.fillRect(0, 358, 854, 90);
 
         if (this.taskCount >= 0) {
-            g.setFont(this.font.deriveFont(Font.PLAIN, 20));
-            String text = (int) (this.currentTask + 1.0F) + "/" + (int) (this.taskCount + 1.0F);
+            String text = (int) (this.currentTask + 1.0F) + "/" + (int) (this.taskCount + 1.0F) + ": " + this.currentTaskName;
             int width = g.getFontMetrics().stringWidth(text);
 
             g.setColor(Color.DARK_GRAY);
-            g.fillRect(0, 312, 854, 36);
+            g.fillRect(0, 0, 854, 36);
 
             g.setColor(Color.WHITE);
-            g.drawString(text, 427 - width / 2, 338);
+            g.drawString(text, 427 - width / 2, 338 - 312);
 
             g.setColor(LauncherPanel.RED);
-            g.fillRect(0, 348, 854, 10);
+            g.fillRect(0, 348 - 312, 854, 10);
 
             g.setColor(LauncherPanel.GREEN);
-            g.fillRect(0, 348, (int) (this.currentProgress / 100.0F * 854.0F), 10);
+            g.fillRect(0, 348 - 312, (int) (this.currentProgress / 100.0F * 854.0F), 10);
         }
 
-        if (this.launcher.feed != null) {
-            SyndEntry entry = this.launcher.feed.getEntries().get(0);
-            g.setColor(Color.WHITE);
-            g.setFont(this.font);
-            g.drawString(entry.getTitle(), 10, 398);
-            g.setFont(this.font.deriveFont(Font.PLAIN, 20));
-            g.drawString(Jsoup.parse(entry.getContents().get(0).getValue()).text().split("   ")[0], 10, 430);
+        if (this.avatar != null) {
+            g.drawImage(this.avatar, 524, 368, null);
         }
 
         this.repaint();
