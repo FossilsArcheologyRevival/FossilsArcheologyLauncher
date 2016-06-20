@@ -2,17 +2,22 @@ package net.ilexiconn.launcher.ui;
 
 import com.google.gson.JsonElement;
 import net.ilexiconn.launcher.Launcher;
+import net.ilexiconn.launcher.resource.RemoteResourceLocation;
+import net.ilexiconn.launcher.resource.ResourceLoader;
+import net.ilexiconn.launcher.resource.ResourceLocation;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 
 public class LauncherPanel extends JPanel {
+    public static final ResourceLocation BANNER = new ResourceLocation("textures/banner.png");
+    public static final ResourceLocation PLAY = new ResourceLocation("textures/play.png");
+    public static final ResourceLocation PLAY_HOVER = new ResourceLocation("textures/play_hover.png");
+
     public static final Color GREEN = new Color(82, 191, 94);
     public static final Color RED = new Color(255, 84, 84);
 
@@ -30,21 +35,20 @@ public class LauncherPanel extends JPanel {
     public JTextField password;
     public JButton play;
 
-    public LauncherPanel(final LauncherFrame frame, final Launcher launcher) {
+    private ResourceLoader resourceLoader;
+
+    public LauncherPanel(final LauncherFrame frame, final Launcher launcher, ResourceLoader resourceLoader) {
         super(true);
         this.frame = frame;
         this.launcher = launcher;
+        this.resourceLoader = resourceLoader;
         this.setLayout(null);
 
-        try {
-            this.banner = ImageIO.read(LauncherPanel.class.getResourceAsStream("/banner.png"));
-            if (launcher.isCached) {
-                Map.Entry<String, JsonElement> entry = new ArrayList<>(launcher.cache.entrySet()).get(0);
-                String username = entry.getValue().getAsJsonObject().get("selectedProfile").getAsJsonObject().get("name").getAsString();
-                this.loadAvatar(username);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        this.banner = resourceLoader.loadImage(LauncherPanel.BANNER);
+        if (launcher.isCached) {
+            Map.Entry<String, JsonElement> entry = new ArrayList<>(launcher.cache.entrySet()).get(0);
+            String username = entry.getValue().getAsJsonObject().get("selectedProfile").getAsJsonObject().get("name").getAsString();
+            this.loadAvatar(username);
         }
 
         this.username = new JTextField(launcher.config.get("username").getAsString());
@@ -62,8 +66,8 @@ public class LauncherPanel extends JPanel {
         this.play.setBounds(814, 368, 30, 70);
         this.play.setBorder(BorderFactory.createEmptyBorder());
         this.play.setContentAreaFilled(false);
-        this.play.setIcon(new ImageIcon(LauncherFrame.class.getResource("/play.png")));
-        this.play.setRolloverIcon(new ImageIcon(LauncherFrame.class.getResource("/play_hover.png")));
+        this.play.setIcon(resourceLoader.loadIcon(LauncherPanel.PLAY));
+        this.play.setRolloverIcon(resourceLoader.loadIcon(LauncherPanel.PLAY_HOVER));
         this.play.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         this.play.setFocusPainted(false);
         this.play.addActionListener(e -> new Thread() {
@@ -94,11 +98,7 @@ public class LauncherPanel extends JPanel {
     }
 
     public void loadAvatar(String username) {
-        try {
-            this.avatar = ImageIO.read(new URL("https://minotar.net/helm/" + username + "/70.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.avatar = this.resourceLoader.loadImage(new RemoteResourceLocation(username + ".png", "https://minotar.net/helm/" + username + "/70.png"));
     }
 
     @Override
@@ -138,5 +138,4 @@ public class LauncherPanel extends JPanel {
 
         this.repaint();
     }
-
 }

@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import net.ilexiconn.launcher.mod.Mod;
 import net.ilexiconn.launcher.mod.ModConfig;
+import net.ilexiconn.launcher.resource.ResourceLoader;
 import net.ilexiconn.launcher.ui.IProgressCallback;
 import net.ilexiconn.launcher.ui.LauncherFrame;
 import org.apache.commons.io.FileDeleteStrategy;
@@ -38,7 +39,8 @@ public class Launcher {
     public boolean isCached;
     public JsonObject cache;
 
-    public LauncherFrame frame;
+    private LauncherFrame frame;
+    private ResourceLoader resourceLoader;
 
     public static void main(String[] args) {
         List<String> argumentList = Arrays.asList(args);
@@ -51,11 +53,13 @@ public class Launcher {
         this.cacheDir = new File(this.dataDir, "cache");
         this.modsDir = new File(this.dataDir, "mods");
         this.configDir = new File(this.dataDir, "config");
+
         if (!this.dataDir.exists()) {
             if (!this.dataDir.mkdirs()) {
                 throw new RuntimeException("Failed to create data dir");
             }
         }
+
         if (this.configFile.exists()) {
             try {
                 this.config = new JsonParser().parse(new FileReader(this.configFile)).getAsJsonObject();
@@ -74,6 +78,7 @@ public class Launcher {
             }
             this.saveConfig();
         }
+
         if (this.cacheDir.exists()) {
             File authFile = new File(this.cacheDir, "auth.json");
             if (authFile.exists()) {
@@ -84,8 +89,14 @@ public class Launcher {
                     e.printStackTrace();
                 }
             }
+        } else {
+            if (!this.cacheDir.mkdirs()) {
+                throw new RuntimeException("Failed to create cache dir");
+            }
         }
-        this.frame = new LauncherFrame(this);
+
+        this.resourceLoader = new ResourceLoader(this.cacheDir);
+        this.frame = new LauncherFrame(this, this.resourceLoader);
     }
 
     public void writeDefaultConfig(JsonObject config) {
@@ -195,7 +206,7 @@ public class Launcher {
             this.frame.panel.currentTaskName = "Downloading mod " + mod;
             Exception e = this.downloadFile(mod.getURL(), new File(this.modsDir, mod.getFileName()));
             if (e != null) {
-                this.frame.panel.currentTaskName = e.getLocalizedMessage();
+                this.frame.panel.currentTaskName = e.getClass().getName();
                 return e;
             }
             if (mod.hasConfig()) {
@@ -204,7 +215,7 @@ public class Launcher {
                     this.frame.panel.currentTaskName = "Downloading config " + config.getFile() + " for mod " + mod;
                     e = this.downloadFile(config.getURL(), new File(this.configDir, config.getFile()));
                     if (e != null) {
-                        this.frame.panel.currentTaskName = e.getLocalizedMessage();
+                        this.frame.panel.currentTaskName = e.getClass().getName();
                         return e;
                     }
                 }

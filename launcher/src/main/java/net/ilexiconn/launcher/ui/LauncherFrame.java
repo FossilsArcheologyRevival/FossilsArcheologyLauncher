@@ -1,14 +1,21 @@
 package net.ilexiconn.launcher.ui;
 
 import net.ilexiconn.launcher.Launcher;
+import net.ilexiconn.launcher.resource.ResourceLoader;
+import net.ilexiconn.launcher.resource.ResourceLocation;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class LauncherFrame extends DraggableFrame {
+    public static final ResourceLocation CLOSE = new ResourceLocation("textures/close.png");
+    public static final ResourceLocation CLOSE_HOVER = new ResourceLocation("textures/close_hover.png");
+    public static final ResourceLocation MINIMIZE = new ResourceLocation("textures/minimize.png");
+    public static final ResourceLocation MINIMIZE_HOVER = new ResourceLocation("textures/minimize_hover.png");
+
     public LauncherPanel panel;
 
-    public LauncherFrame(Launcher launcher) {
+    public LauncherFrame(Launcher launcher, ResourceLoader resourceLoader) {
         super(32);
 
         try {
@@ -20,7 +27,6 @@ public class LauncherFrame extends DraggableFrame {
         this.setTitle("Revival Launcher");
         this.setSize(854, 480);
         this.setResizable(false);
-        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
         this.setAutoRequestFocus(true);
         this.setLayout(new BorderLayout());
@@ -32,8 +38,8 @@ public class LauncherFrame extends DraggableFrame {
         this.add(header, BorderLayout.PAGE_START);
 
         JButton closeButton = new JButton();
-        closeButton.setIcon(new ImageIcon(LauncherFrame.class.getResource("/close.png")));
-        closeButton.setRolloverIcon(new ImageIcon(LauncherFrame.class.getResource("/close_hover.png")));
+        closeButton.setIcon(resourceLoader.loadIcon(LauncherFrame.CLOSE));
+        closeButton.setRolloverIcon(resourceLoader.loadIcon(LauncherFrame.CLOSE_HOVER));
         closeButton.setBorder(BorderFactory.createEmptyBorder());
         closeButton.setContentAreaFilled(false);
         closeButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -45,8 +51,8 @@ public class LauncherFrame extends DraggableFrame {
         header.add(closeButton);
 
         JButton minimizeButton = new JButton();
-        minimizeButton.setIcon(new ImageIcon(LauncherFrame.class.getResource("/minimize.png")));
-        minimizeButton.setRolloverIcon(new ImageIcon(LauncherFrame.class.getResource("/minimize_hover.png")));
+        minimizeButton.setIcon(resourceLoader.loadIcon(LauncherFrame.MINIMIZE));
+        minimizeButton.setRolloverIcon(resourceLoader.loadIcon(LauncherFrame.MINIMIZE_HOVER));
         minimizeButton.setBorder(BorderFactory.createEmptyBorder());
         minimizeButton.setContentAreaFilled(false);
         minimizeButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -54,7 +60,7 @@ public class LauncherFrame extends DraggableFrame {
         minimizeButton.addActionListener(e -> LauncherFrame.this.setExtendedState(JFrame.ICONIFIED));
         header.add(minimizeButton);
 
-        this.add(this.panel = new LauncherPanel(this, launcher), BorderLayout.CENTER);
+        this.add(this.panel = new LauncherPanel(this, launcher, resourceLoader), BorderLayout.CENTER);
 
         this.setVisible(true);
     }
