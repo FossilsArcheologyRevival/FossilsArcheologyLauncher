@@ -35,20 +35,17 @@ public class LauncherPanel extends JPanel {
     public JTextField password;
     public JButton play;
 
-    private ResourceLoader resourceLoader;
-
     public LauncherPanel(final LauncherFrame frame, final Launcher launcher, ResourceLoader resourceLoader) {
         super(true);
         this.frame = frame;
         this.launcher = launcher;
-        this.resourceLoader = resourceLoader;
         this.setLayout(null);
 
         this.banner = resourceLoader.loadImage(LauncherPanel.BANNER);
         if (launcher.isCached) {
             Map.Entry<String, JsonElement> entry = new ArrayList<>(launcher.cache.entrySet()).get(0);
             String username = entry.getValue().getAsJsonObject().get("selectedProfile").getAsJsonObject().get("name").getAsString();
-            this.loadAvatar(username);
+            this.loadAvatar(username, resourceLoader);
         }
 
         this.username = new JTextField(launcher.config.get("username").getAsString());
@@ -97,8 +94,8 @@ public class LauncherPanel extends JPanel {
         this.password.addActionListener(e -> play.doClick());
     }
 
-    public void loadAvatar(String username) {
-        this.avatar = this.resourceLoader.loadImage(new RemoteResourceLocation(username + ".png", "https://minotar.net/helm/" + username + "/70.png"));
+    public void loadAvatar(String username, ResourceLoader resourceLoader) {
+        this.avatar = resourceLoader.loadImage(new RemoteResourceLocation(username + ".png", "https://minotar.net/helm/" + username + "/70.png"));
     }
 
     @Override

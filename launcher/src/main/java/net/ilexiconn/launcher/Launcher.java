@@ -178,7 +178,7 @@ public class Launcher {
         }.start();
 
         LaunchSpec launchSpec = task.getSpec();
-        this.frame.panel.loadAvatar(launchSpec.getAuth().getSelectedProfile().getName());
+        this.frame.panel.loadAvatar(launchSpec.getAuth().getSelectedProfile().getName(), this.resourceLoader);
         Process process = launchSpec.run(Paths.get(this.config.get("javaHome").getAsString(), "bin", OS.getCURRENT() == OS.WINDOWS ? "java.exe" : "java"));
 
         InputStream inputStream = process.getInputStream();
