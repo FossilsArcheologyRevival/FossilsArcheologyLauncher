@@ -6,6 +6,8 @@ import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
+import net.ilexiconn.launcher.mod.Mod;
+import net.ilexiconn.launcher.mod.ModConfig;
 import net.ilexiconn.launcher.ui.IProgressCallback;
 import net.ilexiconn.launcher.ui.LauncherFrame;
 import org.apache.commons.io.FileDeleteStrategy;
@@ -168,16 +170,18 @@ public class Launcher {
 
     public void downloadMods(List<Mod> modList) {
         this.frame.panel.taskCount = modList.size();
-        modList.stream().filter(Mod::hasConfig).forEach(mod -> this.frame.panel.taskCount++);
+        modList.stream().filter(Mod::hasConfig).forEach(mod -> Arrays.asList(mod.getConfigs()).forEach(config -> this.frame.panel.taskCount++));
         this.frame.panel.currentTask = -1;
         for (Mod mod : modList) {
             this.frame.panel.currentTask++;
             System.out.println("Downloading mod " + mod);
             this.downloadFile(mod.getURL(), new File(this.modsDir, mod.getFileName()));
             if (mod.hasConfig()) {
-                this.frame.panel.currentTask++;
-                System.out.println("Downloading config for mod " + mod);
-                this.downloadFile(mod.getConfigURL(), new File(this.configDir, mod.getConfigFile()));
+                for (ModConfig config : mod.getConfigs()) {
+                    this.frame.panel.currentTask++;
+                    System.out.println("Downloading config " + config.getFile() + " for mod " + mod);
+                    this.downloadFile(config.getURL(), new File(this.configDir, config.getFile()));
+                }
             }
         }
         this.frame.panel.currentTask++;

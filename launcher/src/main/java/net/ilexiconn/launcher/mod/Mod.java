@@ -1,7 +1,8 @@
-package net.ilexiconn.launcher;
+package net.ilexiconn.launcher.mod;
 
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import java.io.File;
@@ -13,8 +14,7 @@ public class Mod {
     private String md5;
 
     private boolean hasConfig;
-    private String configFile;
-    private String configURL;
+    private ModConfig[] configs;
 
     public Mod(String fileName, JsonObject object) {
         this.fileName = fileName;
@@ -23,9 +23,11 @@ public class Mod {
 
         this.hasConfig = object.has("config");
         if (this.hasConfig) {
-            object = object.get("config").getAsJsonObject();
-            this.configFile = object.get("file").getAsString();
-            this.configURL = object.get("url").getAsString();
+            JsonArray array = object.get("config").getAsJsonArray();
+            this.configs = new ModConfig[array.size()];
+            for (int i = 0; i < array.size(); i++) {
+                this.configs[i] = new ModConfig(array.get(i).getAsJsonObject());
+            }
         }
     }
 
@@ -45,12 +47,8 @@ public class Mod {
         return hasConfig;
     }
 
-    public String getConfigFile() {
-        return configFile;
-    }
-
-    public String getConfigURL() {
-        return configURL;
+    public ModConfig[] getConfigs() {
+        return configs;
     }
 
     public boolean doDownload(File file) {
