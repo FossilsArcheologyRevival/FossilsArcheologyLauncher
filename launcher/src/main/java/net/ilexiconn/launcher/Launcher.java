@@ -2,6 +2,10 @@ package net.ilexiconn.launcher;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import com.rometools.rome.feed.synd.SyndFeed;
+import com.rometools.rome.io.FeedException;
+import com.rometools.rome.io.SyndFeedInput;
+import com.rometools.rome.io.XmlReader;
 import net.ilexiconn.launcher.ui.IProgressCallback;
 import net.ilexiconn.launcher.ui.LauncherFrame;
 import org.apache.commons.io.FileDeleteStrategy;
@@ -24,6 +28,7 @@ import java.util.stream.Collectors;
 
 public class Launcher {
     public static final String URL = "http://pastebin.com/raw/EiE1kiP5";
+    public static final String RSS_URL = "http://fossils.enjin.com/api/rss.php?preset_id=33718204";
 
     public File dataDir;
     public File configFile;
@@ -34,6 +39,7 @@ public class Launcher {
     public boolean isCached;
 
     public LauncherFrame frame;
+    public SyndFeed feed;
 
     public static void main(String[] args) {
         List<String> argumentList = Arrays.asList(args);
@@ -74,6 +80,13 @@ public class Launcher {
             this.saveConfig();
         }
         this.frame = new LauncherFrame(this);
+
+        try {
+            SyndFeedInput input = new SyndFeedInput();
+            this.feed = input.build(new XmlReader(new URL(Launcher.RSS_URL)));
+        } catch (FeedException | IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void writeDefaultConfig(JsonObject config) {
@@ -98,8 +111,7 @@ public class Launcher {
     }
 
     public void startMinecraft(PasswordSupplier passwordSupplier, final IProgressCallback progressCallback) throws IOException {
-        Map<String, JsonObject> map = new Gson().fromJson(new InputStreamReader(new URL(Launcher.URL).openStream()), new TypeToken<Map<String, JsonObject>>() {
-        }.getType());
+        Map<String, JsonObject> map = new Gson().fromJson(new InputStreamReader(new URL(Launcher.URL).openStream()), new TypeToken<Map<String, JsonObject>>() {}.getType());
         List<Mod> modList = map.entrySet().stream().map(entry -> new Mod(entry.getKey(), entry.getValue())).collect(Collectors.toList());
         if (!this.modsDir.exists()) {
             this.modsDir.mkdirs();
@@ -145,6 +157,7 @@ public class Launcher {
         while ((line = bufferedReader.readLine()) != null) {
             System.out.println(line);
         }
+
         if (this.config.get("launcherBehaviour").getAsInt() != 0) {
             this.frame.setVisible(true);
             this.frame.requestFocus();
@@ -154,14 +167,20 @@ public class Launcher {
     }
 
     public void downloadMods(List<Mod> modList) {
+        this.frame.panel.taskCount = modList.size();
+        modList.stream().filter(Mod::hasConfig).forEach(mod -> this.frame.panel.taskCount++);
+        this.frame.panel.currentTask = -1;
         for (Mod mod : modList) {
-            System.out.println("Downloading mod " + mod.getFileName());
+            this.frame.panel.currentTask++;
+            System.out.println("Downloading mod " + mod);
             this.downloadFile(mod.getURL(), new File(this.modsDir, mod.getFileName()));
             if (mod.hasConfig()) {
-                System.out.println("Downloading config " + mod.getConfigFile());
+                this.frame.panel.currentTask++;
+                System.out.println("Downloading config for mod " + mod);
                 this.downloadFile(mod.getConfigURL(), new File(this.configDir, mod.getConfigFile()));
             }
         }
+        this.frame.panel.currentTask++;
     }
 
     public void downloadFile(String string, File file) {
