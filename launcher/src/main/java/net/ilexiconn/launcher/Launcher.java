@@ -109,6 +109,7 @@ public class Launcher {
             List<String> modNames = modList.stream().map(Mod::getFileName).collect(Collectors.toList());
             for (File file : files) {
                 if (!modNames.contains(file.getName())) {
+                    System.out.println("Removing mod " + file.getName());
                     FileDeleteStrategy.FORCE.delete(file);
                 }
             }
