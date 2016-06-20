@@ -18,6 +18,10 @@ public class DraggableFrame extends JFrame implements MouseListener, MouseMotion
         this.headerHeight = headerHeight;
     }
 
+    public void setHeaderHeight(int headerHeight) {
+        this.headerHeight = headerHeight;
+    }
+
     @Override
     public void mouseClicked(MouseEvent e) {
 

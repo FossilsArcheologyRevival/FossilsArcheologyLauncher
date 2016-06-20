@@ -22,6 +22,7 @@ public class LauncherPanel extends JPanel {
     public String currentTaskName;
 
     public Launcher launcher;
+    public LauncherFrame frame;
     public BufferedImage banner;
     public BufferedImage avatar;
 
@@ -31,6 +32,7 @@ public class LauncherPanel extends JPanel {
 
     public LauncherPanel(final LauncherFrame frame, final Launcher launcher) {
         super(true);
+        this.frame = frame;
         this.launcher = launcher;
         this.setLayout(null);
 
@@ -106,6 +108,7 @@ public class LauncherPanel extends JPanel {
         super.paintComponent(g);
 
         this.play.setEnabled(!this.username.getText().isEmpty() && !this.password.getText().isEmpty());
+        this.frame.setHeaderHeight(this.taskCount >= 0 ? 68 : 32);
 
         ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
 
