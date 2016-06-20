@@ -121,13 +121,13 @@ public class LauncherPanel extends JPanel {
             g.fillRect(0, 0, 854, 36);
 
             g.setColor(Color.WHITE);
-            g.drawString(text, 427 - width / 2, 338 - 312);
+            g.drawString(text, 427 - width / 2, 26);
 
             g.setColor(LauncherPanel.RED);
-            g.fillRect(0, 348 - 312, 854, 10);
+            g.fillRect(0, 36, 854, 10);
 
             g.setColor(LauncherPanel.GREEN);
-            g.fillRect(0, 348 - 312, (int) (this.currentProgress / 100.0F * 854.0F), 10);
+            g.fillRect(0, 36, (int) (this.currentProgress / 100.0F * 854.0F), 10);
         }
 
         if (this.avatar != null) {

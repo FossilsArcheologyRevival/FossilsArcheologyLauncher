@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class LauncherFrame extends DraggableFrame {
+    public static final ResourceLocation LOGO = new ResourceLocation("textures/logo.png");
     public static final ResourceLocation CLOSE = new ResourceLocation("textures/close.png");
     public static final ResourceLocation CLOSE_HOVER = new ResourceLocation("textures/close_hover.png");
     public static final ResourceLocation MINIMIZE = new ResourceLocation("textures/minimize.png");
@@ -26,6 +27,7 @@ public class LauncherFrame extends DraggableFrame {
         }
 
         this.setTitle("Revival Launcher");
+        this.setIconImage(resourceLoader.loadImage(LauncherFrame.LOGO));
         this.setSize(854, 480);
         this.setResizable(false);
         this.setLocationRelativeTo(null);

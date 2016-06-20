@@ -1,5 +1,6 @@
 plugins {
-  id "com.github.johnrengelman.shadow" version "1.2.3"
+    id "com.github.johnrengelman.shadow" version "1.2.3"
+    id "edu.sc.seis.launch4j" version "1.6.1"
 }
 
 dependencies {
@@ -15,3 +16,14 @@ jar {
 }
 
 build.dependsOn(shadowJar)
+
+launch4j {
+    mainClassName = "net.ilexiconn.launcher.Bootstrap"
+    icon = "C:/Users/iLexiconn/Git/revival-launcher/bootstrap/src/main/resources/icon.ico"
+    copyConfigurable = project.tasks.shadowJar.outputs.files
+    jar = "lib/${project.tasks.shadowJar.archiveName}"
+    outfile = "Revival Launcher.exe"
+    companyName = "iLexiconn"
+    description = "Bootstrap for the Revival Launcher"
+    windowTitle = "Bootstrap"
+}
