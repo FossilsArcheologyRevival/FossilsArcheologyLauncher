@@ -24,7 +24,7 @@ public class Mod {
         this.fileName = object.get("file").getAsString();
         this.url = object.get("url").getAsString();
         this.md5 = object.has("md5") ? null : object.get("md5").getAsString().toLowerCase(Locale.ENGLISH);
-        this.modType = object.has("type") ? ModType.MOD : ModType.valueOf(object.get("type").getAsString().toUpperCase(Locale.ENGLISH));
+        this.modType = object.has("type") ? ModType.valueOf(object.get("type").getAsString().toUpperCase(Locale.ENGLISH)) : ModType.MOD;
 
         this.hasConfig = object.has("config");
         if (this.hasConfig) {
