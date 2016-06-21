@@ -67,12 +67,13 @@ public enum Launcher {
         if (this.configFile.exists()) {
             try {
                 this.config = new JsonParser().parse(new FileReader(this.configFile)).getAsJsonObject();
+                this.updateConfig(this.config);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
         } else {
             this.config = new JsonObject();
-            this.writeDefaultConfig(this.config);
+            this.updateConfig(this.config);
             try {
                 if (!this.configFile.createNewFile()) {
                     throw new RuntimeException("Failed to create the config file");
@@ -104,19 +105,37 @@ public enum Launcher {
         this.frame = new LauncherFrame(this, this.resourceLoader, this.translator);
     }
 
-    public void writeDefaultConfig(JsonObject config) {
-        config.addProperty("username", "");
-        config.addProperty("javaHome", System.getProperty("java.home"));
-        config.addProperty("launcherBehaviour", 0);
-        config.addProperty("language", Translator.DEFAULT_LANGUAGE);
-        config.addProperty("url", "http://pastebin.com/raw/EiE1kiP5");
-        JsonArray array = new JsonArray();
-        array.add("-Xmx1G");
-        array.add("-XX:+UseConcMarkSweepGC");
-        array.add("-XX:+CMSIncrementalMode");
-        array.add("-XX:-UseAdaptiveSizePolicy");
-        array.add("-Xmn128M");
-        config.add("jvmArguments", array);
+    public void updateConfig(JsonObject config) {
+        this.putIfNull(config, "username", "");
+        this.putIfNull(config, "javaHome", System.getProperty("java.home"));
+        this.putIfNull(config, "launcherBehaviour", 0);
+        this.putIfNull(config, "language", Translator.DEFAULT_LANGUAGE);
+        this.putIfNull(config, "url", "http://fossils.flippedpolygon.com/modpack/pts/modpack.json");
+        String[] array = new String[5];
+        array[0] = "-Xmx1G";
+        array[1] = "-XX:+UseConcMarkSweepGC";
+        array[2] = "-XX:+CMSIncrementalMode";
+        array[3] = "-XX:-UseAdaptiveSizePolicy";
+        array[4] = "-Xmn128M";
+        this.putIfNull(config, "jvmArguments", array);
+    }
+
+    public void putIfNull(JsonObject config, String key, Object value) {
+        if (!config.has(key)) {
+            if (value instanceof String) {
+                config.addProperty(key, (String) value);
+            } else if (value instanceof Boolean) {
+                config.addProperty(key, (boolean) value);
+            } else if (value instanceof Integer) {
+                config.addProperty(key, (Integer) value);
+            } else if (value instanceof String[]) {
+                JsonArray array = new JsonArray();
+                for (String s : (String[]) value) {
+                    array.add(s);
+                }
+                config.add(key, array);
+            }
+        }
     }
 
     public void saveConfig() {
