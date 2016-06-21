@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 
 public class Mod {
     private String name;
@@ -22,7 +23,7 @@ public class Mod {
         this.name = name;
         this.fileName = object.get("file").getAsString();
         this.url = object.get("url").getAsString();
-        this.md5 = object.get("md5").getAsString();
+        this.md5 = object.get("md5").getAsString().toLowerCase(Locale.ENGLISH);
         this.versionSpecific = object.has("versionSpecific") && object.get("versionSpecific").getAsBoolean();
 
         this.hasConfig = object.has("config");
