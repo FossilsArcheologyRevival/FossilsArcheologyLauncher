@@ -22,7 +22,7 @@ public class Mod {
     public Mod(String name, JsonObject object) {
         this.name = name;
         this.fileName = object.get("file").getAsString();
-        this.url = object.get("url").getAsString();
+        this.url = object.has("url") ? object.get("url").getAsString() : null;
         this.md5 = object.has("md5") ? object.get("md5").getAsString().toLowerCase(Locale.ENGLISH) : null;
         this.modType = object.has("type") ? ModType.valueOf(object.get("type").getAsString().toUpperCase(Locale.ENGLISH)) : ModType.MOD;
 
@@ -65,7 +65,9 @@ public class Mod {
     }
 
     public boolean doDownload(File file) {
-        if (!file.exists()) {
+        if (this.getURL() == null) {
+            return false;
+        } else if (!file.exists()) {
             return true;
         } else {
             try {
