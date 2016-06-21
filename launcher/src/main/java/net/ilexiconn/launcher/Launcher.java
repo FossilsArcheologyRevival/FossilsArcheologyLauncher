@@ -28,12 +28,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class Launcher {
+public enum Launcher {
+    INSTANCE;
+
     public File dataDir;
     public File configFile;
     public File cacheDir;
     public File modsDir;
-    public File modsVersionDir;
+    public File coreModsDir;
     public File configDir;
     public JsonObject config;
     public boolean isCached;
@@ -45,15 +47,15 @@ public class Launcher {
 
     public static void main(String[] args) {
         List<String> argumentList = Arrays.asList(args);
-        new Launcher(argumentList.contains("--portable") || argumentList.contains("-p"));
+        Launcher.INSTANCE.init(argumentList.contains("--portable") || argumentList.contains("-p"));
     }
 
-    public Launcher(boolean portable) {
+    private void init(boolean portable) {
         this.dataDir = portable ? new File(".") : this.getDataFolder();
         this.configFile = new File(this.dataDir, "launcher.json");
         this.cacheDir = new File(this.dataDir, "cache");
         this.modsDir = new File(this.dataDir, "mods");
-        this.modsVersionDir = new File(this.modsDir, "1.7.10");
+        this.coreModsDir = new File(this.modsDir, "1.7.10");
         this.configDir = new File(this.dataDir, "config");
 
         if (!this.dataDir.exists()) {
@@ -141,8 +143,8 @@ public class Launcher {
         if (!this.modsDir.exists()) {
             this.modsDir.mkdirs();
         }
-        if (!this.modsVersionDir.exists()) {
-            this.modsVersionDir.mkdirs();
+        if (!this.coreModsDir.exists()) {
+            this.coreModsDir.mkdirs();
         }
         if (!this.configDir.exists()) {
             this.configDir.mkdirs();
@@ -157,7 +159,7 @@ public class Launcher {
                 }
             }
         }
-        modList.removeIf(mod -> !mod.doDownload(new File(mod.isVersionSpecific() ? this.modsVersionDir : this.modsDir, mod.getFileName())));
+        modList.removeIf(mod -> !mod.doDownload(new File(mod.getModType().getFile(), mod.getFileName())));
         Exception e = this.downloadMods(modList);
         if (e != null) {
             this.frame.panel.username.setEnabled(true);
@@ -212,7 +214,7 @@ public class Launcher {
         for (Mod mod : modList) {
             this.frame.panel.currentTask++;
             this.frame.panel.currentTaskName = this.translator.translate("ui.downloading_mod", mod);
-            Exception e = this.downloadFile(mod.getURL(), new File(mod.isVersionSpecific() ? this.modsVersionDir : this.modsDir, mod.getFileName()));
+            Exception e = this.downloadFile(mod.getURL(), new File(mod.getModType().getFile(), mod.getFileName()));
             if (e != null) {
                 this.frame.panel.currentTaskName = e.getClass().getName();
                 return e;

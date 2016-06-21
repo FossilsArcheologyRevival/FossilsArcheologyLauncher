@@ -14,7 +14,7 @@ public class Mod {
     private String fileName;
     private String url;
     private String md5;
-    private boolean versionSpecific;
+    private ModType modType;
 
     private boolean hasConfig;
     private ModConfig[] configs;
@@ -24,7 +24,7 @@ public class Mod {
         this.fileName = object.get("file").getAsString();
         this.url = object.get("url").getAsString();
         this.md5 = object.get("md5").getAsString().toLowerCase(Locale.ENGLISH);
-        this.versionSpecific = object.has("versionSpecific") && object.get("versionSpecific").getAsBoolean();
+        this.modType = object.has("type") ? ModType.MOD : ModType.valueOf(object.get("type").getAsString().toUpperCase(Locale.ENGLISH));
 
         this.hasConfig = object.has("config");
         if (this.hasConfig) {
@@ -52,8 +52,8 @@ public class Mod {
         return md5;
     }
 
-    public boolean isVersionSpecific() {
-        return versionSpecific;
+    public ModType getModType() {
+        return modType;
     }
 
     public boolean hasConfig() {
