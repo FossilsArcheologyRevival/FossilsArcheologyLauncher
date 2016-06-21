@@ -23,7 +23,7 @@ public class Mod {
         this.name = name;
         this.fileName = object.get("file").getAsString();
         this.url = object.get("url").getAsString();
-        this.md5 = object.has("md5") ? null : object.get("md5").getAsString().toLowerCase(Locale.ENGLISH);
+        this.md5 = object.has("md5") ? object.get("md5").getAsString().toLowerCase(Locale.ENGLISH) : null;
         this.modType = object.has("type") ? ModType.valueOf(object.get("type").getAsString().toUpperCase(Locale.ENGLISH)) : ModType.MOD;
 
         this.hasConfig = object.has("config");
