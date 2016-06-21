@@ -39,4 +39,8 @@ public class Translator {
         }
         return String.format(this.translationMap.get(key), args);
     }
+
+    public String getCurrentLanguage() {
+        return currentLanguage;
+    }
 }
