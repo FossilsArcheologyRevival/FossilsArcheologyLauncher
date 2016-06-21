@@ -29,8 +29,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Launcher {
-    public static final String URL = "http://pastebin.com/raw/EiE1kiP5";
-
     public File dataDir;
     public File configFile;
     public File cacheDir;
@@ -109,6 +107,7 @@ public class Launcher {
         config.addProperty("javaHome", System.getProperty("java.home"));
         config.addProperty("launcherBehaviour", 0);
         config.addProperty("language", Translator.DEFAULT_LANGUAGE);
+        config.addProperty("url", "http://pastebin.com/raw/EiE1kiP5");
         JsonArray array = new JsonArray();
         array.add("-Xmx1G");
         array.add("-XX:+UseConcMarkSweepGC");
@@ -137,7 +136,7 @@ public class Launcher {
             return;
         }
 
-        Map<String, JsonObject> map = new Gson().fromJson(new InputStreamReader(new URL(Launcher.URL).openStream()), new TypeToken<Map<String, JsonObject>>() {}.getType());
+        Map<String, JsonObject> map = new Gson().fromJson(new InputStreamReader(new URL(this.config.get("url").getAsString()).openStream()), new TypeToken<Map<String, JsonObject>>() {}.getType());
         List<Mod> modList = map.entrySet().stream().map(entry -> new Mod(entry.getKey(), entry.getValue())).collect(Collectors.toList());
         if (!this.modsDir.exists()) {
             this.modsDir.mkdirs();
