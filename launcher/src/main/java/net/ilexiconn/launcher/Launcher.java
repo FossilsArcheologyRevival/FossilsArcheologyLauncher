@@ -41,9 +41,9 @@ public enum Launcher {
     public boolean isCached;
     public JsonObject cache;
 
-    private ResourceLoader resourceLoader;
-    private Translator translator;
-    private LauncherFrame frame;
+    public ResourceLoader resourceLoader;
+    public Translator translator;
+    public LauncherFrame frame;
 
     public static void main(String[] args) {
         List<String> argumentList = Arrays.asList(args);
@@ -102,7 +102,7 @@ public enum Launcher {
 
         this.resourceLoader = new ResourceLoader(this.cacheDir);
         this.translator = new Translator(this.config.get("language").getAsString(), this.resourceLoader);
-        this.frame = new LauncherFrame(this, this.resourceLoader, this.translator);
+        this.frame = new LauncherFrame();
     }
 
     public void updateConfig(JsonObject config) {
@@ -206,7 +206,7 @@ public enum Launcher {
         }.start();
 
         LaunchSpec launchSpec = task.getSpec();
-        this.frame.panel.loadAvatar(launchSpec.getAuth().getSelectedProfile().getName(), this.resourceLoader);
+        this.frame.panel.loadAvatar(launchSpec.getAuth().getSelectedProfile().getName());
         Process process = launchSpec.run(Paths.get(this.config.get("javaHome").getAsString(), "bin", OS.getCURRENT() == OS.WINDOWS ? "java.exe" : "java"));
 
         InputStream inputStream = process.getInputStream();

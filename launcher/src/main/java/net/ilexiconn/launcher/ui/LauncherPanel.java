@@ -3,9 +3,7 @@ package net.ilexiconn.launcher.ui;
 import com.google.gson.JsonElement;
 import net.ilexiconn.launcher.Launcher;
 import net.ilexiconn.launcher.resource.RemoteResourceLocation;
-import net.ilexiconn.launcher.resource.ResourceLoader;
 import net.ilexiconn.launcher.resource.ResourceLocation;
-import net.ilexiconn.launcher.resource.lang.Translator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,8 +25,6 @@ public class LauncherPanel extends JPanel {
     public int currentTask;
     public String currentTaskName;
 
-    public Launcher launcher;
-    public LauncherFrame frame;
     public BufferedImage banner;
     public BufferedImage avatar;
 
@@ -36,27 +32,25 @@ public class LauncherPanel extends JPanel {
     public JTextField password;
     public JButton play;
 
-    public LauncherPanel(final LauncherFrame frame, final Launcher launcher, ResourceLoader resourceLoader, Translator translator) {
+    public LauncherPanel() {
         super(true);
-        this.frame = frame;
-        this.launcher = launcher;
         this.setLayout(null);
 
-        this.banner = resourceLoader.loadImage(LauncherPanel.BANNER);
-        if (launcher.isCached) {
-            Map.Entry<String, JsonElement> entry = new ArrayList<>(launcher.cache.entrySet()).get(0);
+        this.banner = Launcher.INSTANCE.resourceLoader.loadImage(LauncherPanel.BANNER);
+        if (Launcher.INSTANCE.isCached) {
+            Map.Entry<String, JsonElement> entry = new ArrayList<>(Launcher.INSTANCE.cache.entrySet()).get(0);
             String username = entry.getValue().getAsJsonObject().get("selectedProfile").getAsJsonObject().get("name").getAsString();
-            this.loadAvatar(username, resourceLoader);
+            this.loadAvatar(username);
         } else {
-            this.loadAvatar("char", resourceLoader);
+            this.loadAvatar("char");
         }
 
-        this.username = new JTextField(launcher.config.get("username").getAsString());
+        this.username = new JTextField(Launcher.INSTANCE.config.get("username").getAsString());
         this.username.setBounds(604, 368, 200, 30);
         this.username.setBorder(BorderFactory.createEmptyBorder());
         this.add(this.username);
 
-        this.password = new JPasswordField(launcher.isCached ? "password" : "");
+        this.password = new JPasswordField(Launcher.INSTANCE.isCached ? "password" : "");
         this.password.setBounds(604, 408, 200, 30);
         this.password.setBorder(BorderFactory.createEmptyBorder());
         ((JPasswordField) this.password).setEchoChar('*');
@@ -66,8 +60,8 @@ public class LauncherPanel extends JPanel {
         this.play.setBounds(814, 368, 30, 70);
         this.play.setBorder(BorderFactory.createEmptyBorder());
         this.play.setContentAreaFilled(false);
-        this.play.setIcon(resourceLoader.loadIcon(LauncherPanel.PLAY));
-        this.play.setRolloverIcon(resourceLoader.loadIcon(LauncherPanel.PLAY_HOVER));
+        this.play.setIcon(Launcher.INSTANCE.resourceLoader.loadIcon(LauncherPanel.PLAY));
+        this.play.setRolloverIcon(Launcher.INSTANCE.resourceLoader.loadIcon(LauncherPanel.PLAY_HOVER));
         this.play.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         this.play.setFocusPainted(false);
         this.play.addActionListener(e -> new Thread() {
@@ -75,9 +69,9 @@ public class LauncherPanel extends JPanel {
                 try {
                     LauncherPanel.this.username.setEnabled(false);
                     LauncherPanel.this.password.setEnabled(false);
-                    launcher.config.addProperty("username", username.getText());
-                    launcher.saveConfig();
-                    launcher.startMinecraft((username1, retry, failureMessage) -> {
+                    Launcher.INSTANCE.config.addProperty("username", username.getText());
+                    Launcher.INSTANCE.saveConfig();
+                    Launcher.INSTANCE.startMinecraft((username1, retry, failureMessage) -> {
                         if (retry) {
                             LauncherPanel.this.username.setEnabled(true);
                             LauncherPanel.this.password.setEnabled(true);
@@ -92,7 +86,7 @@ public class LauncherPanel extends JPanel {
                     }, progress -> {
                         LauncherPanel.this.currentProgress = progress;
                         if (progress == 100) {
-                            frame.setVisible(false);
+                            Launcher.INSTANCE.frame.setVisible(false);
                         }
                     });
                 } catch (IOException e1) {
@@ -105,8 +99,8 @@ public class LauncherPanel extends JPanel {
         this.password.addActionListener(e -> this.play.doClick());
     }
 
-    public void loadAvatar(String username, ResourceLoader resourceLoader) {
-        this.avatar = resourceLoader.loadImage(new RemoteResourceLocation(username + ".png", "https://minotar.net/helm/" + username + "/70.png"));
+    public void loadAvatar(String username) {
+        this.avatar = Launcher.INSTANCE.resourceLoader.loadImage(new RemoteResourceLocation(username + ".png", "https://minotar.net/helm/" + username + "/70.png"));
     }
 
     @Override
@@ -114,7 +108,7 @@ public class LauncherPanel extends JPanel {
         super.paintComponent(g);
 
         this.play.setEnabled(this.username.isEnabled() && this.password.isEnabled() && !this.username.getText().isEmpty() && !this.password.getText().isEmpty());
-        this.frame.setHeaderHeight(this.taskCount >= 0 ? 68 : 32);
+        Launcher.INSTANCE.frame.setHeaderHeight(this.taskCount >= 0 ? 68 : 32);
 
         ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
 
