@@ -7,7 +7,7 @@ import java.io.File;
 public enum ModType {
     MOD(Launcher.INSTANCE.modsDir),
     COREMOD(Launcher.INSTANCE.coreModsDir),
-    CONFIG(Launcher.INSTANCE.dataDir);
+    ROOT(Launcher.INSTANCE.dataDir);
 
     private File file;
 

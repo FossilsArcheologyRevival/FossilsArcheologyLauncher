@@ -23,7 +23,7 @@ public class Mod {
         this.name = name;
         this.fileName = object.get("file").getAsString();
         this.url = object.get("url").getAsString();
-        this.md5 = object.get("md5").getAsString().toLowerCase(Locale.ENGLISH);
+        this.md5 = object.has("md5") ? null : object.get("md5").getAsString().toLowerCase(Locale.ENGLISH);
         this.modType = object.has("type") ? ModType.MOD : ModType.valueOf(object.get("type").getAsString().toUpperCase(Locale.ENGLISH));
 
         this.hasConfig = object.has("config");
@@ -70,7 +70,7 @@ public class Mod {
         } else {
             try {
                 String md5 = Files.hash(file, Hashing.md5()).toString();
-                return !this.getMD5().equals(md5);
+                return this.getMD5() != null && !this.getMD5().equals(md5);
             } catch (IOException e) {
                 e.printStackTrace();
                 return true;
