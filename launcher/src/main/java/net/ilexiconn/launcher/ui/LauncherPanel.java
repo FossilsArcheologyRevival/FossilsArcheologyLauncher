@@ -77,7 +77,18 @@ public class LauncherPanel extends JPanel {
                     LauncherPanel.this.password.setEnabled(false);
                     launcher.config.addProperty("username", username.getText());
                     launcher.saveConfig();
-                    launcher.startMinecraft((name, retry, failureMessage) -> password.getText(), progress -> {
+                    launcher.startMinecraft((username1, retry, failureMessage) -> {
+                        if (retry) {
+                            LauncherPanel.this.username.setEnabled(true);
+                            LauncherPanel.this.password.setEnabled(true);
+                            LauncherPanel.this.currentProgress = 0;
+                            LauncherPanel.this.currentTask = 0;
+                            LauncherPanel.this.taskCount = -1;
+                            return null;
+                        } else {
+                            return LauncherPanel.this.password.getText();
+                        }
+                    }, progress -> {
                         LauncherPanel.this.currentProgress = progress;
                         if (progress == 100) {
                             frame.setVisible(false);
