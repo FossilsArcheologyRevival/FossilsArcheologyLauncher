@@ -135,6 +135,7 @@ public enum Launcher {
         } catch (ForbiddenOperationException e) {
             this.frame.panel.username.setEnabled(true);
             this.frame.panel.password.setEnabled(true);
+            this.frame.panel.password.setText("");
             return;
         }
 

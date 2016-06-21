@@ -81,6 +81,7 @@ public class LauncherPanel extends JPanel {
                         if (retry) {
                             LauncherPanel.this.username.setEnabled(true);
                             LauncherPanel.this.password.setEnabled(true);
+                            LauncherPanel.this.password.setText("");
                             LauncherPanel.this.currentProgress = 0;
                             LauncherPanel.this.currentTask = 0;
                             LauncherPanel.this.taskCount = -1;
